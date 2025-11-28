@@ -1,20 +1,19 @@
 <?php
 session_start();
 
-// Prevent caching so the login page isn't shown from history after auth
+// Prevent caching so authenticated admins don't see login when using Back
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
 header('Expires: 0');
 
-// Redirect authenticated farmers away from login
-if (!empty($_SESSION['logged_in'])) {
-    header('Location: home.php');
+if (!empty($_SESSION['admin_logged_in'])) {
+    header('Location: admin_dashboard.php');
     exit;
 }
 
-// Include database functions
-require_once __DIR__ . '/includes/farmer_functions.php';
+// Include admin functions
+require_once __DIR__ . '/includes/admin_functions.php';
 
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -26,15 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please fill in all fields';
     } else {
         // Authenticate using database
-        $authResult = authenticateFarmer($email, $password);
+        $authResult = authenticateAdmin($email, $password);
         
         if ($authResult['success']) {
-            $_SESSION['logged_in'] = true;
-            $_SESSION['user_email'] = $authResult['farmer']['email'];
-            $_SESSION['user_name'] = $authResult['farmer']['firstName'];
-            $_SESSION['farmer_id'] = $authResult['farmer']['id'];
-            $_SESSION['farmer_lastName'] = $authResult['farmer']['lastName'];
-            header('Location: home.php');
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['admin_email'] = $authResult['admin']['email'];
+            $_SESSION['admin_name'] = $authResult['admin']['firstName'];
+            $_SESSION['admin_id'] = $authResult['admin']['id'];
+            $_SESSION['admin_lastName'] = $authResult['admin']['lastName'];
+            header('Location: admin_dashboard.php');
             exit;
         } else {
             $error = $authResult['message'];
@@ -47,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Login - AgriTrack</title>
+	<title>Admin Login - AgriTrack</title>
 	<link rel="icon" type="image/svg+xml" href="favicon.svg">
 	<link rel="stylesheet" href="css/landing.styles.css">
 	<link rel="stylesheet" href="css/login.css">
@@ -57,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		<div class="container">
 			<div class="header-content">
 				<div class="logo">
-					<a href="landing.php" class="logo-text">AgriTrack</a>
+					<a href="admin_landing.php" class="logo-text">AgriTrack Admin</a>
 				</div>
 			</div>
 		</div>
@@ -69,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				<div class="hero-content">
 					<div class="hero-text">
 						<div class="hero-heading">
-							<h1>Sign in to your AgriTrack account</h1>
-							<p>Enter your credentials to access your inventory dashboard.</p>
+							<h1>Sign in to your AgriTrack admin account</h1>
+							<p>Enter your credentials to access the admin control dashboard.</p>
 						</div>
 					</div>
 
@@ -83,16 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 									<p class="loading-text">Signing in...</p>
 								</div>
 							</div>
-
-							<?php if (isset($_SESSION['registration_success'])): ?>
-								<div style="color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-									<?php 
-									echo htmlspecialchars($_SESSION['registration_success']);
-									unset($_SESSION['registration_success']);
-									?>
-								</div>
-							<?php endif; ?>
-
+							
 							<?php if (isset($error)): ?>
 								<div style="color: #ef4444; background: #fef2f2; border: 1px solid #fecaca; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;">
 									<?php echo htmlspecialchars($error); ?>
@@ -101,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 							
 							<div class="form-row">
 								<label for="email">Email</label>
-								<input type="email" id="email" name="email" placeholder="you@example.com" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" />
+								<input type="email" id="email" name="email" placeholder="admin@example.com" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" />
 							</div>
 							<div class="form-row">
 								<label for="password">Password</label>
@@ -123,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 									</span>
 								</button>
 							</div>
-							<p class="auth-footer" style="color:#64748b;">Don't have an account? <a href="register.php">Sign Up</a></p>
+							<p class="auth-footer" style="color:#64748b;">Farmer portal? <a href="landing.php">Go to farmer portal</a></p>
 						</form>
 					</div>
 				</div>
@@ -157,12 +147,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			});
 		});
 
-        // If the browser served this page from cache (e.g., Back button), reload so PHP can redirect authenticated users
         window.addEventListener('pageshow', function(event) {
             if (event.persisted || (window.performance && performance.getEntriesByType('navigation')[0]?.type === 'back_forward')) {
                 window.location.reload();
             }
-		});
+        });
 	</script>
 </body>
 </html>
+

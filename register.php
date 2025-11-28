@@ -1,6 +1,9 @@
 <?php
 session_start();
 
+// Include database functions
+require_once __DIR__ . '/includes/farmer_functions.php';
+
 // Handle registration form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $firstName = trim($_POST['firstName'] ?? '');
@@ -19,41 +22,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid email address';
     } else {
-        // Simple file-based storage for demo (replace with database)
-        $users_file = 'data/users.txt';
-        $users = [];
+        // Register farmer in database
+        $registerResult = registerFarmer($firstName, $lastName, $email, $password);
         
-        if (file_exists($users_file)) {
-            $users = json_decode(file_get_contents($users_file), true) ?: [];
-        }
-        
-        // Check if email already exists
-        if (isset($users[$email])) {
-            $error = 'An account with this email already exists';
+        if ($registerResult['success']) {
+            // Redirect to login page with success message
+            $_SESSION['registration_success'] = 'Account created successfully! Please sign in to continue.';
+            header('Location: login.php');
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+            exit;
         } else {
-            // Add new user
-            $users[$email] = [
-                'firstName' => $firstName,
-                'lastName' => $lastName,
-                'email' => $email,
-                'password' => password_hash($password, PASSWORD_DEFAULT),
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-            
-            // Ensure data directory exists
-            if (!is_dir('data')) {
-                mkdir('data', 0755, true);
-            }
-            
-            if (file_put_contents($users_file, json_encode($users, JSON_PRETTY_PRINT))) {
-                $_SESSION['logged_in'] = true;
-                $_SESSION['user_email'] = $email;
-                $_SESSION['user_name'] = $firstName;
-                header('Location: /landing.php');
-                exit;
-            } else {
-                $error = 'Registration failed. Please try again.';
-            }
+            $error = $registerResult['message'];
         }
     }
 }
@@ -64,15 +45,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Register - AgriTrack</title>
-	<link rel="stylesheet" href="/css/landing.styles.css">
-	<link rel="stylesheet" href="/css/register.css">
+	<link rel="icon" type="image/svg+xml" href="favicon.svg">
+	<link rel="stylesheet" href="css/landing.styles.css">
+	<link rel="stylesheet" href="css/register.css">
 </head>
 <body>
 	<header class="header">
 		<div class="container">
 			<div class="header-content">
 				<div class="logo">
-					<a href="/landing.php" class="logo-text">AgriTrack</a>
+					<a href="landing.php" class="logo-text">AgriTrack</a>
 				</div>
 			</div>
 		</div>
@@ -125,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 							<div class="form-actions">
 								<button type="submit" class="btn btn-primary btn-large">Create account</button>
-								<p class="auth-footer">Already have an account? <a href="/login.php">Sign in</a></p>
+								<p class="auth-footer">Already have an account? <a href="login.php">Sign in</a></p>
 							</div>
 						</form>
 					</div>

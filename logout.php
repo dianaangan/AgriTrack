@@ -16,7 +16,7 @@ if (ini_get("session.use_cookies")) {
 // Destroy the session
 session_destroy();
 
-// Redirect to landing page
-header('Location: /landing.php');
+// Redirect to farmer login page
+header('Location: login.php');
 exit;
 ?>

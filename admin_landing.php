@@ -1,9 +1,9 @@
 <?php 
 session_start();
 
-// If user is logged in, redirect to home
-if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    header('Location: home.php');
+// If admin is logged in, redirect to admin dashboard
+if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
+    header('Location: admin_dashboard.php');
     exit;
 }
 ?>
@@ -12,7 +12,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriTrack - Farm Inventory Management</title>
+    <title>Admin - AgriTrack</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="css/landing.styles.css">
 </head>
@@ -22,7 +22,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <span class="logo-text">AgriTrack</span>
+                    <span class="logo-text">AgriTrack Admin</span>
                 </div>
 
                 <nav class="nav">
@@ -32,12 +32,12 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
                 </nav>
 
                 <div class="header-buttons">
-                    <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
-                        <span style="color: #64748b; font-size: 0.875rem;">Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-                        <a href="logout.php" class="btn btn-ghost">Logout</a>
+                    <?php if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']): ?>
+                        <span style="color: #64748b; font-size: 0.875rem;">Welcome, <?php echo htmlspecialchars($_SESSION['admin_name']); ?></span>
+                        <a href="admin_logout.php" class="btn btn-ghost">Logout</a>
                     <?php else: ?>
-                        <a href="login.php" class="btn btn-ghost">Login</a>
-                        <a href="register.php" class="btn btn-primary">Sign Up</a>
+                        <a href="admin_login.php" class="btn btn-primary">Admin Login</a>
+                        <a href="landing.php" class="btn btn-ghost">Farmer Portal</a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -50,36 +50,36 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
             <div class="container">
                 <div class="hero-content">
                     <div class="hero-text animate-on-scroll" data-animate="left">
-                        <div class="hero-badge">Smart Farm Operations</div>
+                        <div class="hero-badge">Admin Portal</div>
                         
                         <div class="hero-heading">
-                            <h1>Track Inventory. <span class="gradient-text">Plan Harvests.</span></h1>
-                            <p>Keep inputs and outputs organized, schedule harvests with confidence, and use clear insights to reduce waste and grow profitability.</p>
+                            <h1>Admin Dashboard. <span class="gradient-text">Manage Everything.</span></h1>
+                            <p>Monitor all farmers, track inventory across the platform, generate comprehensive reports, and manage the AgriTrack system with powerful admin tools.</p>
                         </div>
 
                         <div class="hero-buttons">
-                            <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
-                                <a href="home.php" class="btn btn-primary btn-large">Go to Home</a>
+                            <?php if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']): ?>
+                                <a href="admin_dashboard.php" class="btn btn-primary btn-large">Go to Dashboard</a>
                             <?php else: ?>
-                                <a href="register.php" class="btn btn-primary btn-large">Sign Up</a>
+                                <a href="admin_login.php" class="btn btn-primary btn-large">Admin Login</a>
                             <?php endif; ?>
                         </div>
                     </div>
 
                     <div class="hero-image animate-on-scroll" data-animate="right">
                         <div class="image-container">
-                            <img src="images/landing.jpg" alt="Modern farmer using AgriTrack on tablet in greenhouse">
+                            <img src="images/landing.jpg" alt="Admin dashboard for AgriTrack">
                             <div class="image-overlay"></div>
                         </div>
 
                         <div class="floating-stat floating-stat-left">
-                            <div class="stat-number">99.9%</div>
-                            <div class="stat-label">Stock Accuracy</div>
+                            <div class="stat-number">100%</div>
+                            <div class="stat-label">System Control</div>
                         </div>
 
                         <div class="floating-stat floating-stat-right">
-                            <div class="stat-number">2×</div>
-                            <div class="stat-label">Faster Planning</div>
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">Monitoring</div>
                         </div>
                     </div>
                 </div>
@@ -90,19 +90,19 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
         <section id="features" class="features">
             <div class="container">
                 <div class="section-header animate-on-scroll" data-animate="up">
-                    <h2>Simple inventory management for farmers</h2>
-                    <p>Keep track of your crops, livestock, and goods with an easy-to-use inventory system designed specifically for agricultural operations.</p>
+                    <h2>Complete admin control for AgriTrack</h2>
+                    <p>Manage all farmers, monitor inventory, generate reports, and maintain system-wide oversight with comprehensive admin tools.</p>
                 </div>
 
                 <div class="features-grid">
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/add-products.jpg" alt="Adding new farm products" />
+                                <img src="images/add-products.jpg" alt="Manage farmers" />
                             </div>
                             <div class="feature-text">
-                                <h3>Add New Products</h3>
-                                <p>Easily add crops, livestock, and goods to your inventory with detailed information and categorization.</p>
+                                <h3>Manage Farmers</h3>
+                                <p>View all registered farmers, their accounts, and manage farmer profiles across the platform.</p>
                             </div>
                         </div>
                     </div>
@@ -110,11 +110,11 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/update-details.jpg" alt="Updating product details" />
+                                <img src="images/update-details.jpg" alt="View all inventory" />
                             </div>
                             <div class="feature-text">
-                                <h3>Update Product Details</h3>
-                                <p>Modify product information including names, prices, and quantities to keep your inventory current.</p>
+                                <h3>View All Inventory</h3>
+                                <p>Monitor inventory items from all farmers, track quantities, and view system-wide inventory statistics.</p>
                             </div>
                         </div>
                     </div>
@@ -122,11 +122,11 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/view-inventory.jpg" alt="Viewing current inventory" />
+                                <img src="images/view-inventory.jpg" alt="Generate reports" />
                             </div>
                             <div class="feature-text">
-                                <h3>View Current Inventory</h3>
-                                <p>Access a comprehensive list of all your inventory items with real-time quantity and status updates.</p>
+                                <h3>Generate Reports</h3>
+                                <p>Create comprehensive reports on farmers, inventory, and platform usage for better decision making.</p>
                             </div>
                         </div>
                     </div>
@@ -134,11 +134,11 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/manage-stock.jpg" alt="Managing stock status" />
+                                <img src="images/manage-stock.jpg" alt="System management" />
                             </div>
                             <div class="feature-text">
-                                <h3>Manage Stock Status</h3>
-                                <p>Remove items or mark them as out of stock to maintain accurate inventory records.</p>
+                                <h3>System Management</h3>
+                                <p>Maintain system health, manage admin accounts, and oversee platform operations.</p>
                             </div>
                         </div>
                     </div>
@@ -150,38 +150,38 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
         <section id="about" class="stats">
             <div class="container">
                 <div class="section-header animate-on-scroll" data-animate="up">
-                    <h2>Trusted by farmers worldwide</h2>
-                    <p>Replace spreadsheets with a single, reliable source of truth that your whole team can use in the field or in the office.</p>
+                    <h2>Powerful admin tools</h2>
+                    <p>Complete control and visibility over the entire AgriTrack platform with advanced administrative features.</p>
                 </div>
 
                 <div class="stats-grid animate-on-scroll" data-animate="up">
                     <div class="stat-card">
-                        <div class="stat-number">99.9%</div>
-                        <div class="stat-title">Stock Accuracy</div>
-                        <div class="stat-description">Precise inventory tracking with real-time updates</div>
+                        <div class="stat-number">100%</div>
+                        <div class="stat-title">Platform Control</div>
+                        <div class="stat-description">Full administrative access to all features</div>
                     </div>
 
                     <div class="stat-card">
-                        <div class="stat-number">2×</div>
-                        <div class="stat-title">Faster Harvest Planning</div>
-                        <div class="stat-description">Streamlined scheduling saves hours of manual work</div>
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-title">System Monitoring</div>
+                        <div class="stat-description">Real-time tracking of all platform activities</div>
                     </div>
 
                     <div class="stat-card">
-                        <div class="stat-number">−25%</div>
-                        <div class="stat-title">Input Waste Reduction</div>
-                        <div class="stat-description">Smart analytics help optimize resource usage</div>
+                        <div class="stat-number">∞</div>
+                        <div class="stat-title">Unlimited Access</div>
+                        <div class="stat-description">View and manage all farmers and inventory</div>
                     </div>
 
                     <div class="stat-card">
-                        <div class="stat-number">500+</div>
-                        <div class="stat-title">Farms Trust AgriTrack</div>
-                        <div class="stat-description">Growing community of successful farmers</div>
+                        <div class="stat-number">100%</div>
+                        <div class="stat-title">Data Visibility</div>
+                        <div class="stat-description">Complete insights into platform usage</div>
                     </div>
                 </div>
 
                 <div class="stats-footer animate-on-scroll" data-animate="up">
-                    <span>Join thousands of farmers who have transformed their operations</span>
+                    <span>Manage the entire AgriTrack platform with confidence</span>
                 </div>
             </div>
         </section>
@@ -216,3 +216,4 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
     </script>
 </body>
 </html>
+

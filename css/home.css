@@ -1,0 +1,373 @@
+/* Base Reset and Typography - Matching Landing/Login Style */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: #0f172a;
+  background: linear-gradient(to bottom, #ffffff, #f0fdf4);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 400px at -10% -10%, rgba(34, 197, 94, 0.06) 0%, transparent 60%),
+    radial-gradient(800px 300px at 110% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%),
+    linear-gradient(to bottom, #ffffff, #f8fafc);
+  width: 100%;
+}
+
+/* Hide header from landing styles when in dashboard */
+.dashboard-container ~ .header,
+.dashboard-container .header {
+  display: none !important;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  background-color: white;
+  border-right: 1px solid rgba(226, 232, 240, 0.5);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-logo {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-logo-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #059669;
+  border-radius: 0.5rem;
+  color: white;
+  font-weight: bold;
+  font-size: 1.125rem;
+}
+
+.sidebar-logo-text {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 1rem 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  color: rgba(15, 23, 42, 0.8);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  position: relative;
+  margin: 0.25rem 1rem;
+  border-radius: 0.375rem;
+}
+
+.nav-item:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.nav-item.active {
+  background-color: rgba(5, 150, 105, 0.1);
+  color: #059669;
+  font-weight: 600;
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background-color: #059669;
+  border-radius: 0 3px 3px 0;
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+}
+
+.nav-item.active .nav-icon {
+  color: #059669;
+}
+
+.sidebar-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.logout-link {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  color: #64748b;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+}
+
+.logout-link:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  min-height: 100vh;
+}
+
+.content-header {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.4);
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.content-title {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #0f172a;
+  margin: 0;
+}
+
+.content-header p {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 400;
+}
+
+
+.content-body {
+  padding: 2rem;
+}
+
+/* Welcome Banner */
+.welcome-banner {
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(16, 185, 129, 0.08) 100%);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  color: #0f172a;
+}
+
+.welcome-banner h2 {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #0f172a;
+}
+
+.welcome-banner p {
+  font-size: 1rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* Cards */
+.card {
+  background-color: white;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-0.25rem);
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 1rem;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-card {
+  background-color: white;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: all 0.3s;
+  cursor: pointer;
+  position: relative;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-0.25rem);
+}
+
+.dashboard-card-icon {
+  width: 48px;
+  height: 48px;
+  background-color: rgba(5, 150, 105, 0.1);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.dashboard-card h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-card p {
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.btn-dashboard {
+  background-color: #059669;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-block;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-dashboard:hover {
+  background-color: rgba(5, 150, 105, 0.9);
+}
+
+/* Override landing page header styles */
+.dashboard-container .header {
+  display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .content-header {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .content-body {
+    padding: 1rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .welcome-banner {
+    padding: 1.5rem;
+  }
+
+  .welcome-banner h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Scrollbar styling */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
