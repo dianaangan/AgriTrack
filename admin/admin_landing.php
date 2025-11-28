@@ -13,8 +13,8 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - AgriTrack</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="css/landing.styles.css">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="stylesheet" href="../css/landing.styles.css">
 </head>
 <body>
     <!-- Header -->
@@ -37,7 +37,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
                         <a href="admin_logout.php" class="btn btn-ghost">Logout</a>
                     <?php else: ?>
                         <a href="admin_login.php" class="btn btn-primary">Admin Login</a>
-                        <a href="landing.php" class="btn btn-ghost">Farmer Portal</a>
+                        <a href="../farmer/landing.php" class="btn btn-ghost">Farmer Portal</a>
                     <?php endif; ?>
                 </div>
             </div>

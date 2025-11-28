@@ -13,7 +13,7 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
 }
 
 // Include inventory functions
-require_once __DIR__ . '/includes/inventory_functions.php';
+require_once __DIR__ . '/../includes/inventory_functions.php';
 
 function handleProductImageUpload($file, &$error, $currentPath = null) {
     if (!$file || empty($file['name'])) {
@@ -37,7 +37,7 @@ function handleProductImageUpload($file, &$error, $currentPath = null) {
         return false;
     }
 
-    $uploadDir = __DIR__ . '/uploads/products/';
+    $uploadDir = __DIR__ . '/../uploads/products/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
     }
@@ -51,8 +51,8 @@ function handleProductImageUpload($file, &$error, $currentPath = null) {
         return false;
     }
 
-    if ($currentPath && file_exists(__DIR__ . '/' . $currentPath)) {
-        @unlink(__DIR__ . '/' . $currentPath);
+    if ($currentPath && file_exists(__DIR__ . '/../' . $currentPath)) {
+        @unlink(__DIR__ . '/../' . $currentPath);
     }
 
     return 'uploads/products/' . $filename;
@@ -140,7 +140,7 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Product - AgriTrack</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
     <style>
         /* Critical inline styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -149,8 +149,8 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
         .sidebar { width: 260px; background-color: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
         .main-content { flex: 1; margin-left: 260px; min-height: 100vh; }
     </style>
-    <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/home.css' : 'css/home.css'; ?>?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/add_product.css' : 'css/add_product.css'; ?>?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/home.css' : '../css/home.css'; ?>?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/add_product.css' : '../css/add_product.css'; ?>?v=<?php echo time(); ?>">
 </head>
 <body>
     <div class="dashboard-container">

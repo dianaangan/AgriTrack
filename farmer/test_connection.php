@@ -4,8 +4,8 @@
  * Use this to test if your database connection is working properly
  */
 
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/includes/farmer_functions.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/farmer_functions.php';
 
 echo "<h2>AgriTrack Database Connection Test</h2>";
 

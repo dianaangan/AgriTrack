@@ -13,8 +13,8 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriTrack - Farm Inventory Management</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="css/landing.styles.css">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="stylesheet" href="../css/landing.styles.css">
 </head>
 <body>
     <!-- Header -->

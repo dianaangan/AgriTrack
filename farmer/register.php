@@ -2,7 +2,7 @@
 session_start();
 
 // Include database functions
-require_once __DIR__ . '/includes/farmer_functions.php';
+require_once __DIR__ . '/../includes/farmer_functions.php';
 
 // Handle registration form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -45,9 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Register - AgriTrack</title>
-	<link rel="icon" type="image/svg+xml" href="favicon.svg">
-	<link rel="stylesheet" href="css/landing.styles.css">
-	<link rel="stylesheet" href="css/register.css">
+	<link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+	<link rel="stylesheet" href="../css/landing.styles.css">
+	<link rel="stylesheet" href="../css/register.css">
 </head>
 <body>
 	<header class="header">

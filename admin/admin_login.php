@@ -13,7 +13,7 @@ if (!empty($_SESSION['admin_logged_in'])) {
 }
 
 // Include admin functions
-require_once __DIR__ . '/includes/admin_functions.php';
+require_once __DIR__ . '/../includes/admin_functions.php';
 
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -47,9 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Admin Login - AgriTrack</title>
-	<link rel="icon" type="image/svg+xml" href="favicon.svg">
-	<link rel="stylesheet" href="css/landing.styles.css">
-	<link rel="stylesheet" href="css/login.css">
+	<link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+	<link rel="stylesheet" href="../css/landing.styles.css">
+	<link rel="stylesheet" href="../css/login.css">
 </head>
 <body>
 	<header class="header">
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 									</span>
 								</button>
 							</div>
-							<p class="auth-footer" style="color:#64748b;">Farmer portal? <a href="landing.php">Go to farmer portal</a></p>
+							<p class="auth-footer" style="color:#64748b;">Farmer portal? <a href="../farmer/landing.php">Go to farmer portal</a></p>
 						</form>
 					</div>
 				</div>

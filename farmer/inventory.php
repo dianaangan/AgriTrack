@@ -1,6 +1,11 @@
 <?php
 session_start();
 
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
+header('Expires: 0');
+
 // Check if user is logged in
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
     header('Location: login.php');
@@ -8,42 +13,12 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
 }
 
 // Include inventory functions
-require_once __DIR__ . '/includes/inventory_functions.php';
+require_once __DIR__ . '/../includes/inventory_functions.php';
 
 // Get current farmer ID
 $farmerId = $_SESSION['farmer_id'] ?? null;
 
-// Handle quick quantity update
-if (isset($_POST['update_quantity']) && $farmerId) {
-    $itemId = intval($_POST['item_id'] ?? 0);
-    $newQuantity = floatval($_POST['quantity'] ?? 0);
-    
-    if ($itemId > 0 && $newQuantity >= 0) {
-        $result = updateInventoryItem($itemId, $farmerId, ['quantity' => $newQuantity]);
-        if ($result['success']) {
-            $_SESSION['success_message'] = 'Stock quantity updated successfully';
-        } else {
-            $_SESSION['error_message'] = $result['message'];
-        }
-        header('Location: manage_stock.php');
-        exit;
-    }
-}
-
-// Handle mark as out of stock
-if (isset($_GET['mark_out']) && $farmerId) {
-    $itemId = intval($_GET['mark_out']);
-    $result = updateInventoryItem($itemId, $farmerId, ['quantity' => 0]);
-    if ($result['success']) {
-        $_SESSION['success_message'] = 'Item marked as out of stock';
-    } else {
-        $_SESSION['error_message'] = $result['message'];
-    }
-    header('Location: manage_stock.php');
-    exit;
-}
-
-// Handle delete
+// Handle delete request
 if (isset($_GET['delete']) && $farmerId) {
     $itemId = intval($_GET['delete']);
     $result = deleteInventoryItem($itemId, $farmerId);
@@ -52,7 +27,7 @@ if (isset($_GET['delete']) && $farmerId) {
     } else {
         $_SESSION['error_message'] = $result['message'];
     }
-    header('Location: manage_stock.php');
+    header('Location: inventory.php');
     exit;
 }
 
@@ -69,7 +44,8 @@ $stats = $statsResult['stats'] ?? [];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Stock - AgriTrack</title>
+    <title>Inventory - AgriTrack</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
     <style>
         /* Critical inline styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -78,9 +54,8 @@ $stats = $statsResult['stats'] ?? [];
         .sidebar { width: 260px; background-color: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
         .main-content { flex: 1; margin-left: 260px; min-height: 100vh; }
     </style>
-    <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/home.css' : 'css/home.css'; ?>?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/inventory.css' : 'css/inventory.css'; ?>?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/manage_stock.css' : 'css/manage_stock.css'; ?>?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/home.css' : '../css/home.css'; ?>?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/inventory.css' : '../css/inventory.css'; ?>?v=<?php echo time(); ?>">
 </head>
 <body>
     <div class="dashboard-container">
@@ -95,7 +70,7 @@ $stats = $statsResult['stats'] ?? [];
                     <span class="nav-icon">🏠</span>
                     <span>Home</span>
                 </a>
-                <a href="inventory.php" class="nav-item">
+                <a href="inventory.php" class="nav-item active">
                     <span class="nav-icon">📦</span>
                     <span>Inventory</span>
                 </a>
@@ -103,11 +78,11 @@ $stats = $statsResult['stats'] ?? [];
                     <span class="nav-icon">➕</span>
                     <span>Add Products</span>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="reports.php" class="nav-item">
                     <span class="nav-icon">📈</span>
                     <span>Reports</span>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="settings.php" class="nav-item">
                     <span class="nav-icon">⚙️</span>
                     <span>Settings</span>
                 </a>
@@ -125,11 +100,11 @@ $stats = $statsResult['stats'] ?? [];
         <main class="main-content">
             <header class="content-header">
                 <div>
-                    <h1 class="content-title">Manage Stock</h1>
-                    <p style="color: #64748b; font-size: 0.875rem; margin-top: 0.25rem;">Quickly update quantities, mark items out of stock, or remove items</p>
+                    <h1 class="content-title">Inventory</h1>
+                    <p style="color: #64748b; font-size: 0.875rem; margin-top: 0.25rem;">Manage your farm inventory items</p>
                 </div>
                 <div class="header-actions">
-                    <a href="inventory.php" class="btn-secondary">View Inventory</a>
+                    <a href="add_product.php" class="btn-primary">Add Product</a>
                 </div>
             </header>
 
@@ -179,12 +154,24 @@ $stats = $statsResult['stats'] ?? [];
                     </div>
                 </div>
 
-                <!-- Stock Management Table -->
+                <!-- Inventory Table -->
                 <div class="inventory-section">
                     <div class="section-header">
-                        <h2>Stock Management</h2>
+                        <h2>All Products</h2>
                         <div class="table-controls">
                             <input type="text" id="search-input" placeholder="Search products..." class="search-input">
+                            <select id="filter-category" class="filter-select">
+                                <option value="">All Categories</option>
+                                <?php
+                                $categories = [];
+                                foreach ($inventoryItems as $item) {
+                                    if (!in_array($item['category'], $categories)) {
+                                        $categories[] = $item['category'];
+                                        echo '<option value="' . htmlspecialchars($item['category']) . '">' . htmlspecialchars($item['category']) . '</option>';
+                                    }
+                                }
+                                ?>
+                            </select>
                             <select id="filter-status" class="filter-select">
                                 <option value="">All Status</option>
                                 <option value="in_stock">In Stock</option>
@@ -198,51 +185,58 @@ $stats = $statsResult['stats'] ?? [];
                         <div class="empty-state">
                             <div class="empty-icon">📦</div>
                             <h3>No inventory items yet</h3>
-                            <p>Start by adding your first product to manage stock.</p>
+                            <p>Start by adding your first product to track your inventory.</p>
                             <a href="add_product.php" class="btn-primary">Add Your First Product</a>
                         </div>
                     <?php else: ?>
                         <div class="table-wrapper">
-                            <table class="inventory-table stock-table">
+                            <table class="inventory-table">
                                 <thead>
                                     <tr>
                                         <th>Product Name</th>
                                         <th>Category</th>
-                                        <th>Current Quantity</th>
+                                        <th>Quantity</th>
                                         <th>Unit</th>
+                                        <th>Price</th>
                                         <th>Status</th>
-                                        <th>Quick Actions</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($inventoryItems as $item): ?>
-                                        <tr data-status="<?php echo htmlspecialchars($item['status']); ?>">
+                                        <tr data-category="<?php echo htmlspecialchars($item['category']); ?>" 
+                                            data-status="<?php echo htmlspecialchars($item['status']); ?>">
                                             <td>
-                                                <div class="product-name">
-                                                    <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
+                                                <div class="product-details">
+                                                    <?php if (!empty($item['image_path'])): ?>
+                                                        <div class="product-thumb">
+                                                            <img src="<?php echo htmlspecialchars('../' . ltrim($item['image_path'], '/')); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>">
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <div class="product-thumb placeholder">📦</div>
+                                                    <?php endif; ?>
+                                                    <div class="product-name">
+                                                        <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
+                                                        <?php if (!empty($item['description'])): ?>
+                                                            <span class="product-desc"><?php echo htmlspecialchars(substr($item['description'], 0, 50)); ?><?php echo strlen($item['description']) > 50 ? '...' : ''; ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td>
                                                 <span class="category-badge"><?php echo htmlspecialchars($item['category']); ?></span>
                                             </td>
                                             <td>
-                                                <form method="POST" class="quantity-update-form" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                                                    <input type="hidden" name="item_id" value="<?php echo $item['Id']; ?>">
-                                                    <input 
-                                                        type="number" 
-                                                        name="quantity" 
-                                                        value="<?php echo number_format($item['quantity'], 2); ?>" 
-                                                        step="0.01" 
-                                                        min="0" 
-                                                        class="quantity-input"
-                                                        required
-                                                    />
-                                                    <button type="submit" name="update_quantity" class="btn-update" title="Update Quantity">
-                                                        <span>✓</span>
-                                                    </button>
-                                                </form>
+                                                <span class="quantity-value"><?php echo number_format($item['quantity'], 2); ?></span>
                                             </td>
                                             <td><?php echo htmlspecialchars($item['unit']); ?></td>
+                                            <td>
+                                                <?php if ($item['price']): ?>
+                                                    ₱<?php echo number_format($item['price'], 2); ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
                                             <td>
                                                 <?php
                                                 $statusClass = '';
@@ -266,21 +260,13 @@ $stats = $statsResult['stats'] ?? [];
                                             </td>
                                             <td>
                                                 <div class="action-buttons">
-                                                    <?php if ($item['status'] !== 'out_of_stock'): ?>
-                                                        <a href="?mark_out=<?php echo $item['Id']; ?>" 
-                                                           class="btn-icon btn-warning" 
-                                                           title="Mark as Out of Stock"
-                                                           onclick="return confirm('Mark this item as out of stock?')">
-                                                            <span>⚠️</span>
-                                                        </a>
-                                                    <?php endif; ?>
-                                                    <a href="edit_product.php?id=<?php echo $item['Id']; ?>" class="btn-icon" title="Edit Details">
+                                                    <a href="edit_product.php?id=<?php echo $item['Id']; ?>" class="btn-icon" title="Edit">
                                                         <span>✏️</span>
                                                     </a>
                                                     <a href="?delete=<?php echo $item['Id']; ?>" 
                                                        class="btn-icon btn-danger" 
                                                        title="Delete"
-                                                       onclick="return confirm('Are you sure you want to delete this item? This action cannot be undone.')">
+                                                       onclick="return confirm('Are you sure you want to delete this item?')">
                                                         <span>🗑️</span>
                                                     </a>
                                                 </div>
@@ -300,21 +286,25 @@ $stats = $statsResult['stats'] ?? [];
         // Search and filter functionality
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('search-input');
+            const categoryFilter = document.getElementById('filter-category');
             const statusFilter = document.getElementById('filter-status');
-            const tableRows = document.querySelectorAll('.stock-table tbody tr');
+            const tableRows = document.querySelectorAll('.inventory-table tbody tr');
 
             function filterTable() {
                 const searchTerm = searchInput.value.toLowerCase();
+                const selectedCategory = categoryFilter.value;
                 const selectedStatus = statusFilter.value;
 
                 tableRows.forEach(row => {
                     const productName = row.querySelector('.product-name strong').textContent.toLowerCase();
+                    const category = row.dataset.category;
                     const status = row.dataset.status;
 
                     const matchesSearch = productName.includes(searchTerm);
+                    const matchesCategory = !selectedCategory || category === selectedCategory;
                     const matchesStatus = !selectedStatus || status === selectedStatus;
 
-                    if (matchesSearch && matchesStatus) {
+                    if (matchesSearch && matchesCategory && matchesStatus) {
                         row.style.display = '';
                     } else {
                         row.style.display = 'none';
@@ -323,6 +313,7 @@ $stats = $statsResult['stats'] ?? [];
             }
 
             if (searchInput) searchInput.addEventListener('input', filterTable);
+            if (categoryFilter) categoryFilter.addEventListener('change', filterTable);
             if (statusFilter) statusFilter.addEventListener('change', filterTable);
         });
     </script>
