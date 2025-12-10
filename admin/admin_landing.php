@@ -13,7 +13,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - AgriTrack</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="icon" type="image/png" href="../images/agritrack_logo.png?v=3">
     <link rel="stylesheet" href="../css/landing.styles.css">
 </head>
 <body>
@@ -22,7 +22,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <span class="logo-text">AgriTrack Admin</span>
+                    <span class="logo-text">Agr<span class="logo-i">i</span>Track Admin</span>
                 </div>
 
                 <nav class="nav">
@@ -68,7 +68,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
 
                     <div class="hero-image animate-on-scroll" data-animate="right">
                         <div class="image-container">
-                            <img src="images/landing.jpg" alt="Admin dashboard for AgriTrack">
+                            <img src="../images/landing.jpg" alt="Admin dashboard for AgriTrack">
                             <div class="image-overlay"></div>
                         </div>
 
@@ -98,7 +98,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/add-products.jpg" alt="Manage farmers" />
+                                <img src="../images/add-products.jpg" alt="Manage farmers" />
                             </div>
                             <div class="feature-text">
                                 <h3>Manage Farmers</h3>
@@ -110,7 +110,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/update-details.jpg" alt="View all inventory" />
+                                <img src="../images/update-details.jpg" alt="View all inventory" />
                             </div>
                             <div class="feature-text">
                                 <h3>View All Inventory</h3>
@@ -122,7 +122,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/view-inventory.jpg" alt="Generate reports" />
+                                <img src="../images/view-inventory.jpg" alt="Generate reports" />
                             </div>
                             <div class="feature-text">
                                 <h3>Generate Reports</h3>
@@ -134,7 +134,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/manage-stock.jpg" alt="System management" />
+                                <img src="../images/manage-stock.jpg" alt="System management" />
                             </div>
                             <div class="feature-text">
                                 <h3>System Management</h3>

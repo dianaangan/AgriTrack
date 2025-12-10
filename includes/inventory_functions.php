@@ -54,6 +54,41 @@ function getInventoryItemById($itemId, $farmerId) {
 }
 
 /**
+ * Check if product name already exists for a farmer
+ * @param int $farmerId
+ * @param string $productName
+ * @param int|null $excludeId Optional: exclude this item ID (for updates)
+ * @return bool
+ */
+function productNameExists($farmerId, $productName, $excludeId = null) {
+    $pdo = getDatabaseConnection();
+    if (!$pdo) {
+        return false;
+    }
+    
+    try {
+        $productName = trim($productName);
+        if (empty($productName)) {
+            return false;
+        }
+        
+        if ($excludeId) {
+            $stmt = $pdo->prepare("SELECT Id FROM inventory WHERE farmer_id = ? AND LOWER(TRIM(product_name)) = LOWER(?) AND Id != ?");
+            $stmt->execute([$farmerId, $productName, $excludeId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT Id FROM inventory WHERE farmer_id = ? AND LOWER(TRIM(product_name)) = LOWER(?)");
+            $stmt->execute([$farmerId, $productName]);
+        }
+        
+        return $stmt->fetch() !== false;
+        
+    } catch (PDOException $e) {
+        error_log("Check product name exists error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
  * Add new inventory item
  * @param int $farmerId
  * @param array $data
@@ -66,6 +101,12 @@ function addInventoryItem($farmerId, $data) {
     }
     
     try {
+        // Check for duplicate product name
+        $productName = trim($data['product_name'] ?? '');
+        if (!empty($productName) && productNameExists($farmerId, $productName)) {
+            return ['success' => false, 'message' => 'A product with this name already exists. Please use a different name.'];
+        }
+        
         // Determine status based on quantity
         $quantity = floatval($data['quantity'] ?? 0);
         $status = 'in_stock';
@@ -81,7 +122,7 @@ function addInventoryItem($farmerId, $data) {
         $stmt = $pdo->prepare($sql);
         $result = $stmt->execute([
             $farmerId,
-            $data['product_name'] ?? '',
+            $productName,
             $data['category'] ?? '',
             $quantity,
             $data['unit'] ?? '',
@@ -117,6 +158,14 @@ function updateInventoryItem($itemId, $farmerId, $data) {
     }
     
     try {
+        // Check for duplicate product name if product_name is being updated (excluding current product)
+        if (isset($data['product_name'])) {
+            $productName = trim($data['product_name']);
+            if (!empty($productName) && productNameExists($farmerId, $productName, $itemId)) {
+                return ['success' => false, 'message' => 'A product with this name already exists. Please use a different name.'];
+            }
+        }
+        
         // Determine status based on quantity
         $quantity = isset($data['quantity']) ? floatval($data['quantity']) : null;
         $status = null;

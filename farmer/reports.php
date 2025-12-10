@@ -25,6 +25,44 @@ $stats = $statsResult['stats'] ?? [];
 // Get detailed reports
 $reportsResult = $farmerId ? getInventoryReports($farmerId) : ['success' => false, 'reports' => []];
 $reports = $reportsResult['reports'] ?? [];
+
+// Calculate additional analytics
+$totalQuantity = 0;
+$avgPrice = 0;
+$itemsWithPrice = 0;
+$totalPriceSum = 0;
+$categoryValues = [];
+
+$pdo = getDatabaseConnection();
+if ($pdo && $farmerId && !empty($reports['category_breakdown'])) {
+    foreach ($reports['category_breakdown'] as $category) {
+        $stmt = $pdo->prepare("SELECT SUM(quantity * price) as category_value, SUM(quantity) as category_qty FROM inventory WHERE farmer_id = ? AND category = ? AND price IS NOT NULL");
+        $stmt->execute([$farmerId, $category['category']]);
+        $catData = $stmt->fetch();
+        $categoryValues[$category['category']] = [
+            'value' => floatval($catData['category_value'] ?? 0),
+            'quantity' => floatval($catData['category_qty'] ?? 0)
+        ];
+        $totalQuantity += floatval($category['total_quantity'] ?? 0);
+    }
+}
+
+// Calculate average price
+if ($pdo && $farmerId && !empty($reports['items_with_price']) && $reports['items_with_price'] > 0) {
+    $stmt = $pdo->prepare("SELECT AVG(price) as avg_price FROM inventory WHERE farmer_id = ? AND price IS NOT NULL AND price > 0");
+    $stmt->execute([$farmerId]);
+    $avgData = $stmt->fetch();
+    $avgPrice = floatval($avgData['avg_price'] ?? 0);
+}
+
+// Calculate inventory health score (0-100)
+$healthScore = 100;
+$totalItems = $stats['total_items'] ?? 0;
+if ($totalItems > 0) {
+    $lowStockPercent = (($stats['low_stock'] ?? 0) / $totalItems) * 100;
+    $outOfStockPercent = (($stats['out_of_stock'] ?? 0) / $totalItems) * 100;
+    $healthScore = max(0, 100 - ($lowStockPercent * 1.5) - ($outOfStockPercent * 3));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -32,14 +70,14 @@ $reports = $reportsResult['reports'] ?? [];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reports - AgriTrack</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="icon" type="image/png" href="../images/agritrack_logo.png?v=3">
     <style>
         /* Critical inline styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
-        .dashboard-container { display: flex; min-height: 100vh; background-color: #f8fafc; width: 100%; }
+        .dashboard-container { display: flex; min-height: 100vh; background: radial-gradient(1200px 400px at -10% -10%, rgba(34, 197, 94, 0.06) 0%, transparent 60%), radial-gradient(800px 300px at 110% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%), linear-gradient(to bottom, #ffffff, #f0fdf4); width: 100%; }
         .sidebar { width: 260px; background-color: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
-        .main-content { flex: 1; margin-left: 260px; min-height: 100vh; }
+        .main-content { flex: 1; margin-left: 260px; min-height: 100vh; background: radial-gradient(1200px 400px at -10% -10%, rgba(34, 197, 94, 0.06) 0%, transparent 60%), radial-gradient(800px 300px at 110% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%), linear-gradient(to bottom, #ffffff, #f0fdf4); }
     </style>
     <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/home.css' : '../css/home.css'; ?>?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/inventory.css' : '../css/inventory.css'; ?>?v=<?php echo time(); ?>">
@@ -50,7 +88,7 @@ $reports = $reportsResult['reports'] ?? [];
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <a href="landing.php" class="sidebar-logo-text">AgriTrack</a>
+                <a href="landing.php" class="sidebar-logo-text">Agr<span class="logo-i">i</span>Track</a>
             </div>
             
             <nav class="sidebar-nav">
@@ -96,7 +134,41 @@ $reports = $reportsResult['reports'] ?? [];
                 </div>
             </header>
 
-            <div class="content-body">
+            <div class="content-body reports-page">
+                <!-- Key Insights Banner -->
+                <div class="insights-banner">
+                    <div class="insight-item">
+                        <div class="insight-icon">📊</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Inventory Health</div>
+                            <div class="insight-value health-score" data-score="<?php echo round($healthScore); ?>">
+                                <?php echo round($healthScore); ?>%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">📦</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Total Quantity</div>
+                            <div class="insight-value"><?php echo number_format($totalQuantity, 2); ?> units</div>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">💰</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Average Price</div>
+                            <div class="insight-value">₱<?php echo number_format($avgPrice, 2); ?>/unit</div>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">📈</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Active Categories</div>
+                            <div class="insight-value"><?php echo count($reports['category_breakdown'] ?? []); ?> categories</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Summary Cards -->
                 <div class="reports-summary">
                     <div class="summary-card">
@@ -139,9 +211,46 @@ $reports = $reportsResult['reports'] ?? [];
                 </div>
 
                 <!-- Reports Grid -->
-                <div class="reports-grid">
-                    <!-- Category Breakdown -->
-                    <div class="report-card">
+                <div class="reports-section">
+                    <div class="reports-grid">
+                        <!-- Category Value Analysis -->
+                        <?php if (!empty($categoryValues)): ?>
+                        <div class="report-card report-card-featured">
+                            <div class="report-header">
+                                <h2>Category Value Analysis</h2>
+                                <p>Revenue potential by category</p>
+                            </div>
+                            <div class="report-content">
+                                <div class="value-list">
+                                    <?php 
+                                    $maxValue = max(array_column($categoryValues, 'value'));
+                                    foreach ($categoryValues as $catName => $catData): 
+                                        if ($catData['value'] > 0):
+                                            $valuePercent = $maxValue > 0 ? ($catData['value'] / $maxValue) * 100 : 0;
+                                    ?>
+                                        <div class="value-item">
+                                            <div class="value-info">
+                                                <span class="value-name"><?php echo htmlspecialchars($catName); ?></span>
+                                                <span class="value-amount">₱<?php echo number_format($catData['value'], 2); ?></span>
+                                            </div>
+                                            <div class="value-bar">
+                                                <div class="value-bar-fill" style="width: <?php echo $valuePercent; ?>%"></div>
+                                            </div>
+                                            <div class="value-details">
+                                                <?php echo number_format($catData['quantity'], 2); ?> units
+                                            </div>
+                                        </div>
+                                    <?php 
+                                        endif;
+                                    endforeach; 
+                                    ?>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Category Breakdown -->
+                        <div class="report-card">
                         <div class="report-header">
                             <h2>Category Breakdown</h2>
                             <p>Products by category</p>
@@ -301,6 +410,7 @@ $reports = $reportsResult['reports'] ?? [];
                         </div>
                     </div>
                     <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </main>

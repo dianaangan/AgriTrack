@@ -15,7 +15,7 @@ require_once __DIR__ . '/../config/database.php';
 function authenticateAdmin($email, $password) {
     $pdo = getDatabaseConnection();
     if (!$pdo) {
-        return ['success' => false, 'message' => 'Database connection failed. Please check if MySQL is running in XAMPP.'];
+        return ['success' => false, 'message' => 'Database connection failed. Please check if MySQL is running in XAMPP.', 'error_type' => 'general'];
     }
     
     try {
@@ -25,7 +25,7 @@ function authenticateAdmin($email, $password) {
         $admin = $stmt->fetch();
         
         if (!$admin) {
-            return ['success' => false, 'message' => 'Invalid email or password'];
+            return ['success' => false, 'message' => 'Invalid email', 'error_type' => 'email'];
         }
         
         // Verify password
@@ -41,12 +41,12 @@ function authenticateAdmin($email, $password) {
                 ]
             ];
         } else {
-            return ['success' => false, 'message' => 'Invalid email or password'];
+            return ['success' => false, 'message' => 'Invalid password', 'error_type' => 'password'];
         }
         
     } catch (PDOException $e) {
         error_log("Admin authentication error: " . $e->getMessage());
-        return ['success' => false, 'message' => 'Authentication failed. Please try again.'];
+        return ['success' => false, 'message' => 'Authentication failed. Please try again.', 'error_type' => 'general'];
     }
 }
 

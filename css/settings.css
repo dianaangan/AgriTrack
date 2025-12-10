@@ -78,6 +78,22 @@
     color: #94a3b8;
 }
 
+/* Error state styles */
+.form-row input.input-error {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+    color: #0f172a;
+}
+
+.form-row input.input-error:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-row input.input-error::placeholder {
+    color: #ef4444;
+}
+
 .form-row input:invalid:not(:placeholder-shown) {
     border-color: #ef4444;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);

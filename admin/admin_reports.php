@@ -123,6 +123,48 @@ if ($pdo) {
         error_log("Admin reports error: " . $e->getMessage());
     }
 }
+
+// Calculate additional analytics for insights
+$totalQuantity = 0;
+$avgPrice = 0;
+$categoryValues = [];
+$platformHealthScore = 100;
+
+if ($pdo) {
+    try {
+        // Calculate total quantity
+        $stmt = $pdo->query("SELECT SUM(quantity) as total FROM inventory");
+        $totalQuantity = floatval($stmt->fetch()['total'] ?? 0);
+        
+        // Calculate average price
+        $stmt = $pdo->query("SELECT AVG(price) as avg_price FROM inventory WHERE price IS NOT NULL AND price > 0");
+        $avgData = $stmt->fetch();
+        $avgPrice = floatval($avgData['avg_price'] ?? 0);
+        
+        // Calculate category values
+        if (!empty($reports['category_breakdown'])) {
+            foreach ($reports['category_breakdown'] as $category) {
+                $stmt = $pdo->prepare("SELECT SUM(quantity * price) as category_value, SUM(quantity) as category_qty FROM inventory WHERE category = ? AND price IS NOT NULL");
+                $stmt->execute([$category['category']]);
+                $catData = $stmt->fetch();
+                $categoryValues[$category['category']] = [
+                    'value' => floatval($catData['category_value'] ?? 0),
+                    'quantity' => floatval($catData['category_qty'] ?? 0)
+                ];
+            }
+        }
+        
+        // Calculate platform health score
+        $totalItems = $summary['total_items'] ?? 0;
+        if ($totalItems > 0) {
+            $lowStockPercent = (($summary['low_stock'] ?? 0) / $totalItems) * 100;
+            $outOfStockPercent = (($summary['out_of_stock'] ?? 0) / $totalItems) * 100;
+            $platformHealthScore = max(0, 100 - ($lowStockPercent * 1.5) - ($outOfStockPercent * 3));
+        }
+    } catch (PDOException $e) {
+        error_log("Admin analytics calculation error: " . $e->getMessage());
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -130,7 +172,7 @@ if ($pdo) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reports - AgriTrack Admin</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="icon" type="image/png" href="../images/agritrack_logo.png?v=3">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
@@ -147,7 +189,7 @@ if ($pdo) {
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <a href="admin_landing.php" class="sidebar-logo-text">AgriTrack</a>
+                <a href="admin_landing.php" class="sidebar-logo-text">Agr<span class="logo-i">i</span>Track</a>
             </div>
             
             <nav class="sidebar-nav">
@@ -185,7 +227,42 @@ if ($pdo) {
                 </div>
             </header>
 
-            <div class="content-body">
+            <div class="content-body reports-page">
+                <!-- Key Insights Banner -->
+                <div class="insights-banner">
+                    <div class="insight-item">
+                        <div class="insight-icon">📊</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Platform Health</div>
+                            <div class="insight-value health-score" data-score="<?php echo round($platformHealthScore); ?>">
+                                <?php echo round($platformHealthScore); ?>%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">📦</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Total Quantity</div>
+                            <div class="insight-value"><?php echo number_format($totalQuantity, 2); ?> units</div>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">💰</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Average Price</div>
+                            <div class="insight-value">₱<?php echo number_format($avgPrice, 2); ?>/unit</div>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">📈</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Active Categories</div>
+                            <div class="insight-value"><?php echo count($reports['category_breakdown'] ?? []); ?> categories</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Statistics -->
                 <div class="reports-summary">
                     <div class="summary-card">
                         <div class="summary-icon">📦</div>
@@ -194,35 +271,35 @@ if ($pdo) {
                             <div class="summary-value"><?php echo $summary['total_items']; ?></div>
                         </div>
                     </div>
-                    <div class="summary-card summary-success">
+                    <div class="summary-card">
                         <div class="summary-icon">👥</div>
                         <div class="summary-content">
-                            <div class="summary-label">Farmers Contributing</div>
+                            <div class="summary-label">Active Farmers</div>
                             <div class="summary-value"><?php echo $summary['unique_farmers']; ?></div>
                         </div>
                     </div>
-                    <div class="summary-card summary-success">
+                    <div class="summary-card">
                         <div class="summary-icon">✅</div>
                         <div class="summary-content">
                             <div class="summary-label">In Stock</div>
                             <div class="summary-value"><?php echo $summary['in_stock']; ?></div>
                         </div>
                     </div>
-                    <div class="summary-card summary-warning">
+                    <div class="summary-card">
                         <div class="summary-icon">⚠️</div>
                         <div class="summary-content">
                             <div class="summary-label">Low Stock</div>
                             <div class="summary-value"><?php echo $summary['low_stock']; ?></div>
                         </div>
                     </div>
-                    <div class="summary-card summary-error">
-                        <div a class="summary-icon">❌</div>
+                    <div class="summary-card">
+                        <div class="summary-icon">❌</div>
                         <div class="summary-content">
                             <div class="summary-label">Out of Stock</div>
                             <div class="summary-value"><?php echo $summary['out_of_stock']; ?></div>
                         </div>
                     </div>
-                    <div class="summary-card summary-value">
+                    <div class="summary-card">
                         <div class="summary-icon">💰</div>
                         <div class="summary-content">
                             <div class="summary-label">Inventory Value</div>
@@ -231,12 +308,52 @@ if ($pdo) {
                     </div>
                 </div>
 
-                <div class="reports-grid">
-                    <div class="report-card">
-                        <div class="report-header">
-                            <h2>Category Breakdown</h2>
-                            <p>Products grouped by category</p>
+                <!-- Analytics Section -->
+                <div class="reports-section">
+                    <h2 class="section-title">Analytics Overview</h2>
+                    <div class="reports-grid">
+                        <!-- Category Value Analysis -->
+                        <?php if (!empty($categoryValues)): ?>
+                        <div class="report-card report-card-featured">
+                            <div class="report-header">
+                                <h2>Category Value Analysis</h2>
+                                <p>Revenue potential by category</p>
+                            </div>
+                            <div class="report-content">
+                                <div class="value-list">
+                                    <?php 
+                                    $maxValue = max(array_column($categoryValues, 'value'));
+                                    foreach ($categoryValues as $catName => $catData): 
+                                        if ($catData['value'] > 0):
+                                            $valuePercent = $maxValue > 0 ? ($catData['value'] / $maxValue) * 100 : 0;
+                                    ?>
+                                        <div class="value-item">
+                                            <div class="value-info">
+                                                <span class="value-name"><?php echo htmlspecialchars($catName); ?></span>
+                                                <span class="value-amount">₱<?php echo number_format($catData['value'], 2); ?></span>
+                                            </div>
+                                            <div class="value-bar">
+                                                <div class="value-bar-fill" style="width: <?php echo $valuePercent; ?>%"></div>
+                                            </div>
+                                            <div class="value-details">
+                                                <?php echo number_format($catData['quantity'], 2); ?> units
+                                            </div>
+                                        </div>
+                                    <?php 
+                                        endif;
+                                    endforeach; 
+                                    ?>
+                                </div>
+                            </div>
                         </div>
+                        <?php endif; ?>
+
+                        <!-- Category Breakdown -->
+                        <div class="report-card">
+                            <div class="report-header">
+                                <h2>Category Breakdown</h2>
+                                <p>Products grouped by category</p>
+                            </div>
                         <div class="report-content">
                             <?php if (!empty($reports['category_breakdown'])): ?>
                                 <div class="category-list">
@@ -342,83 +459,105 @@ if ($pdo) {
                         </div>
                     </div>
 
-                    <?php if (!empty($reports['low_stock_items'])): ?>
-                    <div class="report-card report-warning">
-                        <div class="report-header">
-                            <h2>Low Stock Alerts</h2>
-                            <p>Items that need attention</p>
-                        </div>
-                        <div class="report-content">
-                            <div class="alert-list">
-                                <?php foreach ($reports['low_stock_items'] as $item): ?>
-                                    <div class="alert-item">
-                                        <div>
-                                            <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
-                                            <span class="alert-category"><?php echo htmlspecialchars($item['category']); ?></span>
-                                        </div>
-                                        <div class="alert-item-quantity">
-                                            <?php echo number_format($item['quantity'], 2); ?> <?php echo htmlspecialchars($item['unit']); ?>
-                                        </div>
-                                        <span class="alert-date"><?php echo date('M d, Y', strtotime($item['updated_at'])); ?></span>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
                     </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($reports['out_of_stock_items'])): ?>
-                    <div class="report-card report-error">
-                        <div class="report-header">
-                            <h2>Out of Stock</h2>
-                            <p>Products to restock</p>
-                        </div>
-                        <div class="report-content">
-                            <div class="alert-list">
-                                <?php foreach ($reports['out_of_stock_items'] as $item): ?>
-                                    <div class="alert-item">
-                                        <div>
-                                            <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
-                                            <span class="alert-category"><?php echo htmlspecialchars($item['category']); ?></span>
-                                        </div>
-                                        <span class="alert-date"><?php echo date('M d, Y', strtotime($item['updated_at'])); ?></span>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($reports['recent_items'])): ?>
-                    <div class="report-card">
-                        <div class="report-header">
-                            <h2>Recent Additions</h2>
-                            <p>Latest products from farmers</p>
-                        </div>
-                        <div class="report-content">
-                            <div class="recent-list">
-                                <?php foreach ($reports['recent_items'] as $item): ?>
-                                    <div class="recent-item">
-                                        <div class="recent-item-info">
-                                            <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
-                                            <span class="recent-category"><?php echo htmlspecialchars($item['category']); ?></span>
-                                        </div>
-                                        <div class="recent-item-details">
-                                            <span><?php echo number_format($item['quantity'], 2); ?> <?php echo htmlspecialchars($item['unit']); ?></span>
-                                            <span class="recent-date"><?php echo date('M d, Y', strtotime($item['created_at'])); ?></span>
-                                        </div>
-                                        <?php if (!empty($item['firstName'])): ?>
-                                        <div class="recent-item-farmer">
-                                            by <?php echo htmlspecialchars($item['firstName'] . ' ' . $item['lastName']); ?>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
                 </div>
+
+                <!-- Alerts Section -->
+                <?php if (!empty($reports['low_stock_items']) || !empty($reports['out_of_stock_items'])): ?>
+                <div class="reports-section">
+                    <h2 class="section-title">Stock Alerts</h2>
+                    <div class="reports-grid alerts-grid">
+                        <?php if (!empty($reports['low_stock_items'])): ?>
+                        <div class="report-card report-warning">
+                            <div class="report-header">
+                                <h2>Low Stock Alerts</h2>
+                                <p>Items that need attention</p>
+                            </div>
+                            <div class="report-content">
+                                <div class="alert-list">
+                                    <?php foreach ($reports['low_stock_items'] as $item): ?>
+                                        <div class="alert-item">
+                                            <div class="alert-item-main">
+                                                <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
+                                                <span class="alert-category"><?php echo htmlspecialchars($item['category']); ?></span>
+                                            </div>
+                                            <div class="alert-item-meta">
+                                                <div class="alert-item-quantity">
+                                                    <?php echo number_format($item['quantity'], 2); ?> <?php echo htmlspecialchars($item['unit']); ?>
+                                                </div>
+                                                <span class="alert-date"><?php echo date('M d, Y', strtotime($item['updated_at'])); ?></span>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($reports['out_of_stock_items'])): ?>
+                        <div class="report-card report-error">
+                            <div class="report-header">
+                                <h2>Out of Stock</h2>
+                                <p>Products to restock</p>
+                            </div>
+                            <div class="report-content">
+                                <div class="alert-list">
+                                    <?php foreach ($reports['out_of_stock_items'] as $item): ?>
+                                        <div class="alert-item">
+                                            <div class="alert-item-main">
+                                                <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
+                                                <span class="alert-category"><?php echo htmlspecialchars($item['category']); ?></span>
+                                            </div>
+                                            <div class="alert-item-meta">
+                                                <span class="alert-date"><?php echo date('M d, Y', strtotime($item['updated_at'])); ?></span>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Recent Activity Section -->
+                <?php if (!empty($reports['recent_items'])): ?>
+                <div class="reports-section">
+                    <h2 class="section-title">Recent Activity</h2>
+                    <div class="reports-grid">
+                        <div class="report-card">
+                            <div class="report-header">
+                                <h2>Recent Additions</h2>
+                                <p>Latest products from farmers</p>
+                            </div>
+                            <div class="report-content">
+                                <div class="recent-list">
+                                    <?php foreach ($reports['recent_items'] as $item): ?>
+                                        <div class="recent-item">
+                                            <div class="recent-item-main">
+                                                <div class="recent-item-info">
+                                                    <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
+                                                    <span class="recent-category"><?php echo htmlspecialchars($item['category']); ?></span>
+                                                </div>
+                                                <?php if (!empty($item['firstName'])): ?>
+                                                <div class="recent-item-farmer">
+                                                    by <?php echo htmlspecialchars($item['firstName'] . ' ' . $item['lastName']); ?>
+                                                </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="recent-item-details">
+                                                <span><?php echo number_format($item['quantity'], 2); ?> <?php echo htmlspecialchars($item['unit']); ?></span>
+                                                <span class="recent-date"><?php echo date('M d, Y', strtotime($item['created_at'])); ?></span>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </main>
     </div>

@@ -13,7 +13,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriTrack - Farm Inventory Management</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="icon" type="image/png" href="../images/agritrack_logo.png?v=3">
     <link rel="stylesheet" href="../css/landing.styles.css">
 </head>
 <body>
@@ -22,7 +22,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <span class="logo-text">AgriTrack</span>
+                    <span class="logo-text">Agr<span class="logo-i">i</span>Track</span>
                 </div>
 
                 <nav class="nav">
@@ -68,7 +68,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
 
                     <div class="hero-image animate-on-scroll" data-animate="right">
                         <div class="image-container">
-                            <img src="images/landing.jpg" alt="Modern farmer using AgriTrack on tablet in greenhouse">
+                            <img src="../images/landing.jpg" alt="Modern farmer using AgriTrack on tablet in greenhouse">
                             <div class="image-overlay"></div>
                         </div>
 
@@ -98,7 +98,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/add-products.jpg" alt="Adding new farm products" />
+                                <img src="../images/add-products.jpg" alt="Adding new farm products" />
                             </div>
                             <div class="feature-text">
                                 <h3>Add New Products</h3>
@@ -110,7 +110,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/update-details.jpg" alt="Updating product details" />
+                                <img src="../images/update-details.jpg" alt="Updating product details" />
                             </div>
                             <div class="feature-text">
                                 <h3>Update Product Details</h3>
@@ -122,7 +122,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/view-inventory.jpg" alt="Viewing current inventory" />
+                                <img src="../images/view-inventory.jpg" alt="Viewing current inventory" />
                             </div>
                             <div class="feature-text">
                                 <h3>View Current Inventory</h3>
@@ -134,7 +134,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
                     <div class="feature-card animate-on-scroll" data-animate="up">
                         <div class="feature-content">
                             <div class="feature-icon">
-                                <img src="images/manage-stock.jpg" alt="Managing stock status" />
+                                <img src="../images/manage-stock.jpg" alt="Managing stock status" />
                             </div>
                             <div class="feature-text">
                                 <h3>Manage Stock Status</h3>

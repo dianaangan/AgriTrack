@@ -57,7 +57,7 @@ $latestFarmer = $recentFarmers[0] ?? null;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - AgriTrack</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="icon" type="image/png" href="../images/agritrack_logo.png?v=3">
     <style>
         /* Critical inline styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -75,7 +75,7 @@ $latestFarmer = $recentFarmers[0] ?? null;
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <a href="admin_landing.php" class="sidebar-logo-text">AgriTrack</a>
+                <a href="admin_landing.php" class="sidebar-logo-text">Agr<span class="logo-i">i</span>Track</a>
             </div>
             
             <nav class="sidebar-nav">
@@ -124,96 +124,103 @@ $latestFarmer = $recentFarmers[0] ?? null;
                             <div class="stat-value"><?php echo $stats['total_farmers'] ?? 0; ?></div>
                         </div>
                     </div>
-                    <div class="stat-card stat-success">
+                    <div class="stat-card">
                         <div class="stat-icon">📦</div>
                         <div class="stat-content">
                             <div class="stat-label">Total Items</div>
                             <div class="stat-value"><?php echo $stats['total_items'] ?? 0; ?></div>
                         </div>
                     </div>
-                    <div class="stat-card stat-warning">
+                    <div class="stat-card">
                         <div class="stat-icon">💰</div>
                         <div class="stat-content">
                             <div class="stat-label">Total Value</div>
                             <div class="stat-value">₱<?php echo number_format($stats['total_value'] ?? 0, 2); ?></div>
                         </div>
                     </div>
-                </div>
-
-                <div class="dashboard-panels">
-                    <div class="panel-card">
-                        <div class="section-header">
-                            <h2>System Overview</h2>
-                            <p>Quick snapshot of platform activity</p>
-                        </div>
-                        <div class="overview-grid">
-                            <div class="overview-item">
-                                <span class="overview-label">Active Farmers</span>
-                                <strong class="overview-value"><?php echo $stats['total_farmers'] ?? 0; ?></strong>
-                            </div>
-                            <div class="overview-item">
-                                <span class="overview-label">Inventory Items</span>
-                                <strong class="overview-value"><?php echo $stats['total_items'] ?? 0; ?></strong>
-                            </div>
-                            <div class="overview-item">
-                                <span class="overview-label">Avg Items / Farmer</span>
-                                <strong class="overview-value"><?php echo $averageItems; ?></strong>
-                            </div>
-                            <div class="overview-item">
-                                <span class="overview-label">Inventory Value</span>
-                                <strong class="overview-value">₱<?php echo number_format($stats['total_value'] ?? 0, 2); ?></strong>
-                            </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Avg Items / Farmer</div>
+                            <div class="stat-value"><?php echo $averageItems; ?></div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="panel-card latest-card">
-                        <h2>Latest Farmer</h2>
+                <!-- Main Content Grid -->
+                <div class="dashboard-panels">
+                    <!-- Latest Farmer Card -->
+                    <div class="panel-card">
+                        <h2 class="panel-title">Latest Farmer</h2>
                         <?php if ($latestFarmer): ?>
-                            <div class="latest-info">
-                                <span class="latest-name"><?php echo htmlspecialchars($latestFarmer['firstName'] . ' ' . $latestFarmer['lastName']); ?></span>
-                                <span class="latest-email"><?php echo htmlspecialchars($latestFarmer['email']); ?></span>
-                                <span class="latest-date">Joined <?php echo date('M d, Y', strtotime($latestFarmer['created_at'])); ?></span>
+                            <div class="latest-farmer">
+                                <div class="latest-avatar">
+                                    <?php echo strtoupper(substr($latestFarmer['firstName'], 0, 1) . substr($latestFarmer['lastName'], 0, 1)); ?>
+                                </div>
+                                <div class="latest-details">
+                                    <div class="latest-name"><?php echo htmlspecialchars($latestFarmer['firstName'] . ' ' . $latestFarmer['lastName']); ?></div>
+                                    <div class="latest-email"><?php echo htmlspecialchars($latestFarmer['email']); ?></div>
+                                    <div class="latest-date">Joined <?php echo date('M d, Y', strtotime($latestFarmer['created_at'])); ?></div>
+                                </div>
+                            </div>
+                            <div class="panel-footer">
+                                <a href="admin_farmers.php" class="btn-link">View all farmers →</a>
                             </div>
                         <?php else: ?>
-                            <p style="color:#64748b;">No farmers yet.</p>
+                            <p class="empty-state">No farmers registered yet.</p>
                         <?php endif; ?>
-                        <div class="latest-footer">
-                            <a href="#" class="btn-secondary">View all farmers</a>
-                        </div>
                     </div>
-                </div>
 
-                <!-- Recent Farmers -->
-                <?php if (!empty($recentFarmers)): ?>
-                <div class="inventory-section">
-                    <div class="section-header">
-                        <h2>Recent Farmers</h2>
-                    </div>
-                    <div style="overflow-x: auto;">
-                        <table class="product-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Joined</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($recentFarmers as $farmer): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($farmer['firstName'] . ' ' . $farmer['lastName']); ?></td>
-                                    <td><?php echo htmlspecialchars($farmer['email']); ?></td>
-                                    <td><?php echo date('M d, Y', strtotime($farmer['created_at'])); ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                    <!-- Recent Farmers -->
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Recent Farmers</h2>
+                            <a href="admin_farmers.php" class="btn-link">View all →</a>
+                        </div>
+                        <?php if (!empty($recentFarmers)): ?>
+                        <div class="recent-farmers-list">
+                            <?php foreach ($recentFarmers as $farmer): ?>
+                            <div class="recent-farmer-item">
+                                <div class="farmer-avatar-small">
+                                    <?php echo strtoupper(substr($farmer['firstName'], 0, 1) . substr($farmer['lastName'], 0, 1)); ?>
+                                </div>
+                                <div class="farmer-info">
+                                    <div class="farmer-name"><?php echo htmlspecialchars($farmer['firstName'] . ' ' . $farmer['lastName']); ?></div>
+                                    <div class="farmer-email"><?php echo htmlspecialchars($farmer['email']); ?></div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php else: ?>
+                        <p class="empty-state">No farmers yet.</p>
+                        <?php endif; ?>
                     </div>
                 </div>
-                <?php endif; ?>
             </div>
         </main>
     </div>
+
+    <script>
+        // Prevent back navigation to login page after successful login
+        (function() {
+            // Replace the login page in browser history with dashboard page
+            // This prevents users from going back to login after authentication
+            if (window.history.replaceState) {
+                window.history.replaceState(null, null, window.location.href);
+            }
+
+            // Handle browser back button
+            window.addEventListener('popstate', function(event) {
+                // When user clicks back button, redirect to landing page
+                // This prevents going back to login page
+                window.location.href = 'admin_landing.php';
+            });
+
+            // Push a new state to history so back button works properly
+            // This ensures the back button goes to landing instead of login
+            window.history.pushState({ page: 'dashboard' }, '', window.location.href);
+        })();
+    </script>
 </body>
 </html>
 

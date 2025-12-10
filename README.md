@@ -94,8 +94,8 @@ The application follows a modular architecture with clear separation of concerns
      ```
 
 3. **Initialize the database**
-   - Navigate to `http://localhost/AgriTrack/farmer/test_connection.php` in your browser
-   - This will automatically create all required tables (farmers, admins, inventory, etc.)
+   - The database tables will be created automatically when you first register a farmer or admin
+   - Make sure your database exists and the connection settings in `config/database.php` are correct
 
 4. **Create upload directory**
    ```bash

@@ -16,13 +16,23 @@ if (!empty($_SESSION['admin_logged_in'])) {
 require_once __DIR__ . '/../includes/admin_functions.php';
 
 // Handle login form submission
+$emailError = '';
+$passwordError = '';
+$emailValue = '';
+$passwordValue = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     
     // Simple validation
     if (empty($email) || empty($password)) {
-        $error = 'Please fill in all fields';
+        if (empty($email)) {
+            $emailError = 'Please fill in email';
+        }
+        if (empty($password)) {
+            $passwordError = 'Please fill in password';
+        }
     } else {
         // Authenticate using database
         $authResult = authenticateAdmin($email, $password);
@@ -36,9 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: admin_dashboard.php');
             exit;
         } else {
-            $error = $authResult['message'];
+            // Show field-specific errors in both fields
+            $emailError = 'Invalid email';
+            $passwordError = 'Invalid password';
+            $emailValue = ''; // Clear email on error
+            $passwordValue = ''; // Clear password on error
         }
     }
+} else {
+    // On GET request, preserve email if it was submitted (for better UX)
+    $emailValue = htmlspecialchars($_POST['email'] ?? '');
 }
 ?>
 <!DOCTYPE html>
@@ -47,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Admin Login - AgriTrack</title>
-	<link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+	<link rel="icon" type="image/png" href="../images/agritrack_logo.png?v=3">
 	<link rel="stylesheet" href="../css/landing.styles.css">
 	<link rel="stylesheet" href="../css/login.css">
 </head>
@@ -56,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		<div class="container">
 			<div class="header-content">
 				<div class="logo">
-					<a href="admin_landing.php" class="logo-text">AgriTrack Admin</a>
+					<a href="admin_landing.php" class="logo-text">Agr<span class="logo-i">i</span>Track Admin</a>
 				</div>
 			</div>
 		</div>
@@ -83,19 +100,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 								</div>
 							</div>
 							
-							<?php if (isset($error)): ?>
-								<div style="color: #ef4444; background: #fef2f2; border: 1px solid #fecaca; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-									<?php echo htmlspecialchars($error); ?>
-								</div>
-							<?php endif; ?>
-							
 							<div class="form-row">
 								<label for="email">Email</label>
-								<input type="email" id="email" name="email" placeholder="admin@example.com" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" />
+								<input type="email" id="email" name="email" 
+									class="<?php echo $emailError ? 'input-error' : ''; ?>"
+									placeholder="<?php echo $emailError ? htmlspecialchars($emailError) : 'admin@example.com'; ?>" 
+									required 
+									value="<?php echo $emailValue; ?>" />
 							</div>
 							<div class="form-row">
 								<label for="password">Password</label>
-								<input type="password" id="password" name="password" placeholder="Your password" required />
+								<input type="password" id="password" name="password" 
+									class="<?php echo $passwordError ? 'input-error' : ''; ?>"
+									placeholder="<?php echo $passwordError ? htmlspecialchars($passwordError) : 'Your password'; ?>" 
+									required />
 							</div>
 							<div class="helper-row">
 								<a href="#" class="nav-link" style="font-size:.875rem;">Forgot Password?</a>
@@ -129,6 +147,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			const loadingOverlay = document.getElementById('loading-overlay');
 			const emailInput = document.getElementById('email');
 			const passwordInput = document.getElementById('password');
+
+			// Clear error state when user starts typing
+			emailInput.addEventListener('input', function() {
+				if (this.classList.contains('input-error')) {
+					this.classList.remove('input-error');
+					this.placeholder = 'admin@example.com';
+				}
+			});
+
+			passwordInput.addEventListener('input', function() {
+				if (this.classList.contains('input-error')) {
+					this.classList.remove('input-error');
+					this.placeholder = 'Your password';
+				}
+			});
 
 			form.addEventListener('submit', function(e) {
 				// Validate form before showing loading

@@ -21,18 +21,21 @@ function registerFarmer($firstName, $lastName, $email, $password) {
     }
     
     try {
-        // Check if email already exists
-        $stmt = $pdo->prepare("SELECT Id FROM farmers WHERE email = ?");
+        // Normalize email to lowercase for case-insensitive comparison
+        $email = trim(strtolower($email));
+        
+        // Check if email already exists (case-insensitive - email is already normalized)
+        $stmt = $pdo->prepare("SELECT Id FROM farmers WHERE LOWER(email) = ?");
         $stmt->execute([$email]);
         
         if ($stmt->fetch()) {
-            return ['success' => false, 'message' => 'An account with this email already exists'];
+            return ['success' => false, 'message' => 'This email is already registered. Please use a different email or sign in if you already have an account.'];
         }
         
         // Hash password
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         
-        // Insert new farmer
+        // Insert new farmer (email is already normalized to lowercase)
         $stmt = $pdo->prepare("INSERT INTO farmers (firstName, lastName, email, password) VALUES (?, ?, ?, ?)");
         $result = $stmt->execute([$firstName, $lastName, $email, $hashedPassword]);
         
@@ -57,7 +60,7 @@ function registerFarmer($firstName, $lastName, $email, $password) {
 function authenticateFarmer($email, $password) {
     $pdo = getDatabaseConnection();
     if (!$pdo) {
-        return ['success' => false, 'message' => 'Database connection failed. Please check if MySQL is running in XAMPP.'];
+        return ['success' => false, 'message' => 'Database connection failed. Please check if MySQL is running in XAMPP.', 'error_type' => 'general'];
     }
     
     try {
@@ -67,7 +70,7 @@ function authenticateFarmer($email, $password) {
         $farmer = $stmt->fetch();
         
         if (!$farmer) {
-            return ['success' => false, 'message' => 'Invalid email or password'];
+            return ['success' => false, 'message' => 'Invalid email', 'error_type' => 'email'];
         }
         
         // Verify password
@@ -83,12 +86,12 @@ function authenticateFarmer($email, $password) {
                 ]
             ];
         } else {
-            return ['success' => false, 'message' => 'Invalid email or password'];
+            return ['success' => false, 'message' => 'Invalid password', 'error_type' => 'password'];
         }
         
     } catch (PDOException $e) {
         error_log("Farmer authentication error: " . $e->getMessage());
-        return ['success' => false, 'message' => 'Authentication failed. Please try again.'];
+        return ['success' => false, 'message' => 'Authentication failed. Please try again.', 'error_type' => 'general'];
     }
 }
 
@@ -115,6 +118,40 @@ function getFarmerById($farmerId) {
 }
 
 /**
+ * Check if email already exists for a farmer
+ * @param string $email
+ * @param int|null $excludeId Optional: exclude this farmer ID (for updates)
+ * @return bool
+ */
+function farmerEmailExists($email, $excludeId = null) {
+    $pdo = getDatabaseConnection();
+    if (!$pdo) {
+        return false;
+    }
+    
+    try {
+        $email = trim(strtolower($email));
+        if (empty($email)) {
+            return false;
+        }
+        
+        if ($excludeId) {
+            $stmt = $pdo->prepare("SELECT Id FROM farmers WHERE LOWER(TRIM(email)) = ? AND Id != ?");
+            $stmt->execute([$email, $excludeId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT Id FROM farmers WHERE LOWER(TRIM(email)) = ?");
+            $stmt->execute([$email]);
+        }
+        
+        return $stmt->fetch() !== false;
+        
+    } catch (PDOException $e) {
+        error_log("Check email exists error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
  * Update farmer profile
  * @param int $farmerId
  * @param array $data
@@ -127,13 +164,14 @@ function updateFarmerProfile($farmerId, $data) {
     }
     
     try {
-        // Ensure email is unique when updating
+        // Ensure email is unique when updating (case-insensitive)
         if (isset($data['email'])) {
-            $stmt = $pdo->prepare("SELECT Id FROM farmers WHERE email = ? AND Id != ?");
-            $stmt->execute([$data['email'], $farmerId]);
-            if ($stmt->fetch()) {
-                return ['success' => false, 'message' => 'An account with this email already exists'];
+            $email = trim(strtolower($data['email']));
+            if (farmerEmailExists($email, $farmerId)) {
+                return ['success' => false, 'message' => 'An account with this email already exists. Please use a different email.'];
             }
+            // Normalize email to lowercase for storage
+            $data['email'] = $email;
         }
 
         $allowedFields = ['firstName', 'lastName', 'email'];

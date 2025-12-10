@@ -62,7 +62,7 @@ if ($pdo) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Inventory - AgriTrack Admin</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="icon" type="image/png" href="../images/agritrack_logo.png?v=3">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
@@ -78,7 +78,7 @@ if ($pdo) {
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <a href="admin_landing.php" class="sidebar-logo-text">AgriTrack</a>
+                <a href="admin_landing.php" class="sidebar-logo-text">Agr<span class="logo-i">i</span>Track</a>
             </div>
             <nav class="sidebar-nav">
                 <a href="admin_dashboard.php" class="<?php echo ($currentPage === 'dashboard') ? 'nav-item active' : 'nav-item'; ?>">

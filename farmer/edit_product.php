@@ -79,44 +79,89 @@ if (!$item) {
     exit;
 }
 
-$error = '';
-$success = false;
+// Field-specific error variables
+$productNameError = '';
+$categoryError = '';
+$quantityError = '';
+$unitError = '';
+$priceError = '';
+$imageError = '';
+$customCategoryError = '';
+
 $imagePath = $item['image_path'] ?? null;
+
+// Field values - initialize with existing item data
+$productNameValue = htmlspecialchars($item['product_name']);
+$categoryValue = htmlspecialchars($item['category']);
+$quantityValue = htmlspecialchars($item['quantity']);
+$unitValue = htmlspecialchars($item['unit']);
+$priceValue = $item['price'] ? htmlspecialchars($item['price']) : '';
+$descriptionValue = htmlspecialchars($item['description'] ?? '');
+$customCategoryValue = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $farmerId) {
     $productName = trim($_POST['product_name'] ?? '');
     $category = trim($_POST['category'] ?? '');
+    $customCategory = trim($_POST['custom_category'] ?? '');
     $quantity = $_POST['quantity'] ?? '';
     $unit = trim($_POST['unit'] ?? '');
     $price = $_POST['price'] ?? '';
     $description = trim($_POST['description'] ?? '');
     
-    // Validation
+    // Field-specific validation
     if (empty($productName)) {
-        $error = 'Product name is required';
-    } elseif (empty($category)) {
-        $error = 'Category is required';
-    } elseif (empty($quantity) || $quantity < 0) {
-        $error = 'Please enter a valid quantity (0 or greater)';
-    } elseif (empty($unit)) {
-        $error = 'Unit is required';
+        $productNameError = 'Product name is required';
     } else {
-        // Prepare data
-        // Handle image upload if provided
-        $imageUploadError = '';
-        $uploadedPath = handleProductImageUpload($_FILES['product_image'] ?? null, $imageUploadError, $imagePath);
-        if ($uploadedPath === false) {
-            $error = $imageUploadError;
-        } else {
-            $imagePath = $uploadedPath;
+        // Check for duplicate product name (excluding current product)
+        if (productNameExists($farmerId, $productName, $itemId)) {
+            $productNameError = 'A product with this name already exists. Please use a different name.';
+            $productNameValue = '';
         }
     }
+    
+    if (empty($category)) {
+        $categoryError = 'Category is required';
+    } elseif ($category === 'Other' && empty($customCategory)) {
+        $customCategoryError = 'Please enter a custom category';
+        $categoryError = '';
+    }
+    
+    if (empty($quantity)) {
+        $quantityError = 'Quantity is required';
+    } elseif (!is_numeric($quantity) || floatval($quantity) < 0) {
+        $quantityError = 'Please enter a valid quantity (0 or greater)';
+        $quantityValue = '';
+    }
+    
+    if (empty($unit)) {
+        $unitError = 'Unit is required';
+    }
+    
+    if (!empty($price) && (!is_numeric($price) || floatval($price) < 0)) {
+        $priceError = 'Please enter a valid price (0 or greater)';
+        $priceValue = '';
+    }
+    
+    // Handle image upload if provided
+    $imageUploadError = '';
+    $uploadedPath = handleProductImageUpload($_FILES['product_image'] ?? null, $imageUploadError, $imagePath);
+    if ($uploadedPath === false && !empty($imageUploadError)) {
+        $imageError = $imageUploadError;
+    } else if ($uploadedPath !== false) {
+        $imagePath = $uploadedPath;
+    }
 
-    if (empty($error)) {
+    // If no validation errors, proceed with update
+    if (empty($productNameError) && empty($categoryError) && empty($customCategoryError) && 
+        empty($quantityError) && empty($unitError) && empty($priceError) && empty($imageError)) {
+        
+        // Use custom category if "Other" was selected
+        $finalCategory = ($category === 'Other' && !empty($customCategory)) ? $customCategory : $category;
+        
         $data = [
             'product_name' => $productName,
-            'category' => $category,
+            'category' => $finalCategory,
             'quantity' => floatval($quantity),
             'unit' => $unit,
             'description' => $description,
@@ -138,18 +183,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $farmerId) {
             header('Location: inventory.php');
             exit;
         } else {
-            $error = $result['message'];
+            // Show error in product name field if database error
+            $productNameError = $result['message'];
+            $productNameValue = '';
         }
+    } else {
+        // Preserve valid values, clear invalid ones
+        $productNameValue = empty($productNameError) ? $productName : '';
+        $categoryValue = empty($categoryError) ? $category : '';
+        $quantityValue = empty($quantityError) ? $quantity : '';
+        $unitValue = empty($unitError) ? $unit : '';
+        $priceValue = empty($priceError) ? $price : '';
+        $descriptionValue = $description;
+        $customCategoryValue = empty($customCategoryError) ? $customCategory : '';
     }
 }
-
-// Use posted values if form was submitted with errors, otherwise use existing item data
-$productName = isset($_POST['product_name']) ? htmlspecialchars($_POST['product_name']) : htmlspecialchars($item['product_name']);
-$category = isset($_POST['category']) ? htmlspecialchars($_POST['category']) : htmlspecialchars($item['category']);
-$quantity = isset($_POST['quantity']) ? htmlspecialchars($_POST['quantity']) : htmlspecialchars($item['quantity']);
-$unit = isset($_POST['unit']) ? htmlspecialchars($_POST['unit']) : htmlspecialchars($item['unit']);
-$price = isset($_POST['price']) ? htmlspecialchars($_POST['price']) : ($item['price'] ? htmlspecialchars($item['price']) : '');
-$description = isset($_POST['description']) ? htmlspecialchars($_POST['description']) : htmlspecialchars($item['description'] ?? '');
 
 // Common categories for agriculture
 $commonCategories = [
@@ -170,14 +218,14 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Product - AgriTrack</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="icon" type="image/png" href="../images/agritrack_logo.png?v=3">
     <style>
         /* Critical inline styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
-        .dashboard-container { display: flex; min-height: 100vh; background-color: #f8fafc; width: 100%; }
+        .dashboard-container { display: flex; min-height: 100vh; background: radial-gradient(1200px 400px at -10% -10%, rgba(34, 197, 94, 0.06) 0%, transparent 60%), radial-gradient(800px 300px at 110% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%), linear-gradient(to bottom, #ffffff, #f0fdf4); width: 100%; }
         .sidebar { width: 260px; background-color: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
-        .main-content { flex: 1; margin-left: 260px; min-height: 100vh; }
+        .main-content { flex: 1; margin-left: 260px; min-height: 100vh; background: radial-gradient(1200px 400px at -10% -10%, rgba(34, 197, 94, 0.06) 0%, transparent 60%), radial-gradient(800px 300px at 110% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%), linear-gradient(to bottom, #ffffff, #f0fdf4); }
     </style>
     <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/home.css' : '../css/home.css'; ?>?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/add_product.css' : '../css/add_product.css'; ?>?v=<?php echo time(); ?>">
@@ -187,7 +235,7 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <a href="landing.php" class="sidebar-logo-text">AgriTrack</a>
+                <a href="landing.php" class="sidebar-logo-text">Agr<span class="logo-i">i</span>Track</a>
             </div>
             
             <nav class="sidebar-nav">
@@ -235,13 +283,7 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
 
             <div class="content-body">
                 <div class="form-container">
-                    <?php if ($error): ?>
-                        <div class="alert alert-error">
-                            <?php echo htmlspecialchars($error); ?>
-                        </div>
-                    <?php endif; ?>
-
-                        <form method="POST" enctype="multipart/form-data" class="product-form" id="edit-product-form">
+                    <form method="POST" enctype="multipart/form-data" class="product-form" id="edit-product-form">
                         <div class="form-section">
                             <h2 class="form-section-title">Product Information</h2>
                             
@@ -251,18 +293,21 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
                                     type="text" 
                                     id="product_name" 
                                     name="product_name" 
-                                    placeholder="e.g., Organic Tomatoes" 
+                                    class="<?php echo $productNameError ? 'input-error' : ''; ?>"
+                                    placeholder="<?php echo $productNameError ? htmlspecialchars($productNameError) : 'e.g., Organic Tomatoes'; ?>" 
                                     required 
-                                    value="<?php echo $productName; ?>"
+                                    value="<?php echo $productNameValue; ?>"
                                 />
                             </div>
 
                             <div class="form-row">
                                 <label for="category">Category <span class="required">*</span></label>
-                                <select id="category" name="category" required>
-                                    <option value="">Select a category</option>
+                                <select id="category" name="category" 
+                                    class="<?php echo $categoryError ? 'input-error' : ''; ?>"
+                                    required>
+                                    <option value=""><?php echo $categoryError ? htmlspecialchars($categoryError) : 'Select a category'; ?></option>
                                     <?php 
-                                    $selectedCategory = isset($_POST['category']) ? $_POST['category'] : $category;
+                                    $selectedCategory = $categoryValue;
                                     $isCustomCategory = true;
                                     
                                     // Check if selected category is in the predefined list
@@ -312,8 +357,9 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
                                         type="text" 
                                         id="custom-category" 
                                         name="custom_category" 
-                                        placeholder="Enter custom category"
-                                        value="<?php echo ($isCustomCategory && $selectedCategory) ? htmlspecialchars($selectedCategory) : ''; ?>"
+                                        class="<?php echo $customCategoryError ? 'input-error' : ''; ?>"
+                                        placeholder="<?php echo $customCategoryError ? htmlspecialchars($customCategoryError) : 'Enter custom category'; ?>"
+                                        value="<?php echo ($isCustomCategory && $selectedCategory) ? htmlspecialchars($selectedCategory) : htmlspecialchars($customCategoryValue); ?>"
                                         style="padding: 0.875rem 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; color: #0f172a; background-color: white; transition: all 0.2s; width: 100%; font-family: inherit;"
                                     />
                                 </div>
@@ -327,14 +373,14 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
                                     name="description" 
                                     rows="3" 
                                     placeholder="Additional details about the product (optional)"
-                                ><?php echo $description; ?></textarea>
+                                ><?php echo $descriptionValue; ?></textarea>
                             </div>
 
                             <div class="form-row">
                                 <label for="product_image">Product Image</label>
                                 <div class="image-upload">
                                     <input type="file" id="product_image" name="product_image" accept="image/*">
-                                    <div class="image-dropzone" id="edit-product-image-dropzone">
+                                    <div class="image-dropzone <?php echo $imageError ? 'image-error' : ''; ?>" id="edit-product-image-dropzone">
                                         <div class="image-preview" id="edit-product-image-preview">
                                             <?php if (!empty($imagePath)): ?>
                                                 <img src="<?php echo htmlspecialchars('../' . ltrim($imagePath, '/')); ?>" alt="Product image">
@@ -344,7 +390,7 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
                                         </div>
                                         <div class="image-instructions">
                                             <strong>Upload product photo</strong>
-                                            <span>Drag & drop or click to browse</span>
+                                            <span><?php echo $imageError ? htmlspecialchars($imageError) : 'Drag & drop or click to browse'; ?></span>
                                         </div>
                                     </div>
                                 </div>
@@ -362,20 +408,23 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
                                         type="number" 
                                         id="quantity" 
                                         name="quantity" 
-                                        placeholder="0" 
+                                        class="<?php echo $quantityError ? 'input-error' : ''; ?>"
+                                        placeholder="<?php echo $quantityError ? htmlspecialchars($quantityError) : '0'; ?>" 
                                         step="0.01" 
                                         min="0" 
                                         required 
-                                        value="<?php echo $quantity; ?>"
+                                        value="<?php echo $quantityValue; ?>"
                                     />
                                 </div>
 
                                 <div class="form-row">
                                     <label for="unit">Unit <span class="required">*</span></label>
-                                    <select id="unit" name="unit" required>
-                                        <option value="">Select a unit</option>
+                                    <select id="unit" name="unit" 
+                                        class="<?php echo $unitError ? 'input-error' : ''; ?>"
+                                        required>
+                                        <option value=""><?php echo $unitError ? htmlspecialchars($unitError) : 'Select a unit'; ?></option>
                                         <?php 
-                                        $selectedUnit = isset($_POST['unit']) ? $_POST['unit'] : $unit;
+                                        $selectedUnit = $unitValue;
                                         foreach ($commonUnits as $unitOption): ?>
                                             <option value="<?php echo htmlspecialchars($unitOption); ?>" 
                                                 <?php echo ($selectedUnit === $unitOption) ? 'selected' : ''; ?>>
@@ -395,10 +444,11 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
                                         type="number" 
                                         id="price" 
                                         name="price" 
-                                        placeholder="0.00" 
+                                        class="<?php echo $priceError ? 'input-error' : ''; ?>"
+                                        placeholder="<?php echo $priceError ? htmlspecialchars($priceError) : '0.00'; ?>" 
                                         step="0.01" 
                                         min="0" 
-                                        value="<?php echo $price; ?>"
+                                        value="<?php echo $priceValue; ?>"
                                     />
                                 </div>
                                 <small class="form-hint">Leave empty if not applicable</small>
@@ -436,6 +486,72 @@ $commonUnits = ['kg', 'g', 'lbs', 'tons', 'pieces', 'units', 'liters', 'gallons'
                     customCategoryInput.value = '';
                 }
             });
+
+            // Clear error state when user starts typing
+            const productNameInput = document.getElementById('product_name');
+            const quantityInput = document.getElementById('quantity');
+            const unitSelect = document.getElementById('unit');
+            const priceInput = document.getElementById('price');
+            
+            if (productNameInput) {
+                productNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        this.classList.remove('input-error');
+                        this.placeholder = 'e.g., Organic Tomatoes';
+                    }
+                });
+            }
+            
+            if (quantityInput) {
+                quantityInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        this.classList.remove('input-error');
+                        this.placeholder = '0';
+                    }
+                });
+            }
+            
+            if (unitSelect) {
+                unitSelect.addEventListener('change', function() {
+                    if (this.classList.contains('input-error')) {
+                        this.classList.remove('input-error');
+                        const firstOption = this.querySelector('option[value=""]');
+                        if (firstOption) {
+                            firstOption.textContent = 'Select a unit';
+                        }
+                    }
+                });
+            }
+            
+            if (priceInput) {
+                priceInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        this.classList.remove('input-error');
+                        this.placeholder = '0.00';
+                    }
+                });
+            }
+            
+            if (categorySelect) {
+                categorySelect.addEventListener('change', function() {
+                    if (this.classList.contains('input-error')) {
+                        this.classList.remove('input-error');
+                        const firstOption = this.querySelector('option[value=""]');
+                        if (firstOption) {
+                            firstOption.textContent = 'Select a category';
+                        }
+                    }
+                });
+            }
+            
+            if (customCategoryInput) {
+                customCategoryInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        this.classList.remove('input-error');
+                        this.placeholder = 'Enter custom category';
+                    }
+                });
+            }
 
             // Add submitted class on form submit attempt
             form.addEventListener('submit', function(e) {

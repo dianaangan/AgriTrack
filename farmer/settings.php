@@ -27,8 +27,16 @@ if (!$farmer) {
     exit;
 }
 
-$profileError = '';
+// Field-specific error variables
+$firstNameError = '';
+$lastNameError = '';
+$emailError = '';
 $profileSuccess = false;
+
+// Field values - initialize with existing farmer data
+$firstNameValue = htmlspecialchars($farmer['firstName'] ?? '');
+$lastNameValue = htmlspecialchars($farmer['lastName'] ?? '');
+$emailValue = htmlspecialchars($farmer['email'] ?? '');
 
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile']) && $farmerId) {
@@ -36,16 +44,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile']) && 
     $lastName = trim($_POST['lastName'] ?? '');
     $email = trim($_POST['email'] ?? '');
     
-    // Validation
+    // Field-specific validation
     if (empty($firstName)) {
-        $profileError = 'First name is required';
-    } elseif (empty($lastName)) {
-        $profileError = 'Last name is required';
-    } elseif (empty($email)) {
-        $profileError = 'Email is required';
+        $firstNameError = 'First name is required';
+    }
+    
+    if (empty($lastName)) {
+        $lastNameError = 'Last name is required';
+    }
+    
+    if (empty($email)) {
+        $emailError = 'Email is required';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $profileError = 'Please enter a valid email address';
+        $emailError = 'Please enter a valid email address';
+        $emailValue = '';
     } else {
+        // Check for duplicate email (excluding current farmer)
+        if (farmerEmailExists($email, $farmerId)) {
+            $emailError = 'An account with this email already exists. Please use a different email.';
+            $emailValue = '';
+        }
+    }
+    
+    // If no validation errors, proceed with update
+    if (empty($firstNameError) && empty($lastNameError) && empty($emailError)) {
         $data = [
             'firstName' => $firstName,
             'lastName' => $lastName,
@@ -57,22 +79,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile']) && 
         if ($result['success']) {
             $profileSuccess = true;
             // Update session data
-            $_SESSION['farmer_firstName'] = $firstName;
+            $_SESSION['user_name'] = $firstName;
             $_SESSION['farmer_lastName'] = $lastName;
-            $_SESSION['farmer_email'] = $email;
+            $_SESSION['user_email'] = $email;
             // Reload farmer data
             $farmer = getFarmerById($farmerId);
+            // Update field values with new data
+            $firstNameValue = htmlspecialchars($farmer['firstName'] ?? '');
+            $lastNameValue = htmlspecialchars($farmer['lastName'] ?? '');
+            $emailValue = htmlspecialchars($farmer['email'] ?? '');
         } else {
-            $profileError = $result['message'];
+            // Show error in email field if database error (including duplicate check)
+            $emailError = $result['message'];
+            $emailValue = '';
         }
+    } else {
+        // Preserve valid values, clear invalid ones
+        $firstNameValue = empty($firstNameError) ? $firstName : '';
+        $lastNameValue = empty($lastNameError) ? $lastName : '';
+        $emailValue = empty($emailError) ? $email : '';
     }
 }
-
-
-// Pre-fill form data
-$firstName = isset($_POST['firstName']) ? htmlspecialchars($_POST['firstName']) : htmlspecialchars($farmer['firstName'] ?? '');
-$lastName = isset($_POST['lastName']) ? htmlspecialchars($_POST['lastName']) : htmlspecialchars($farmer['lastName'] ?? '');
-$email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecialchars($farmer['email'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -80,14 +107,14 @@ $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecia
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - AgriTrack</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2">
+    <link rel="icon" type="image/png" href="../images/agritrack_logo.png?v=3">
     <style>
         /* Critical inline styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
-        .dashboard-container { display: flex; min-height: 100vh; background-color: #f8fafc; width: 100%; }
+        .dashboard-container { display: flex; min-height: 100vh; background: radial-gradient(1200px 400px at -10% -10%, rgba(34, 197, 94, 0.06) 0%, transparent 60%), radial-gradient(800px 300px at 110% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%), linear-gradient(to bottom, #ffffff, #f0fdf4); width: 100%; }
         .sidebar { width: 260px; background-color: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
-        .main-content { flex: 1; margin-left: 260px; min-height: 100vh; }
+        .main-content { flex: 1; margin-left: 260px; min-height: 100vh; background: radial-gradient(1200px 400px at -10% -10%, rgba(34, 197, 94, 0.06) 0%, transparent 60%), radial-gradient(800px 300px at 110% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%), linear-gradient(to bottom, #ffffff, #f0fdf4); }
     </style>
     <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/home.css' : '../css/home.css'; ?>?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="<?php echo (strpos($_SERVER['REQUEST_URI'], '/AgriTrack') !== false) ? '/AgriTrack/css/settings.css' : '../css/settings.css'; ?>?v=<?php echo time(); ?>">
@@ -97,7 +124,7 @@ $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecia
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <a href="landing.php" class="sidebar-logo-text">AgriTrack</a>
+                <a href="landing.php" class="sidebar-logo-text">Agr<span class="logo-i">i</span>Track</a>
             </div>
             
             <nav class="sidebar-nav">
@@ -150,13 +177,6 @@ $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecia
                                 <p>Update your personal information</p>
                             </div>
 
-                            <?php if ($profileError): ?>
-                                <div class="alert alert-error">
-                                    <span>⚠️</span>
-                                    <span><?php echo htmlspecialchars($profileError); ?></span>
-                                </div>
-                            <?php endif; ?>
-
                             <?php if ($profileSuccess): ?>
                                 <div class="alert alert-success" id="success-alert">
                                     <span>✅</span>
@@ -164,7 +184,7 @@ $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecia
                                 </div>
                             <?php endif; ?>
 
-                            <div class="profile-display" id="profile-display">
+                            <div class="profile-display" id="profile-display" style="display: <?php echo ($firstNameError || $lastNameError || $emailError) ? 'none' : 'block'; ?>;">
                                 <div class="profile-info">
                                     <div class="info-row">
                                         <span class="info-label">First Name</span>
@@ -184,7 +204,7 @@ $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecia
                                 </div>
                             </div>
 
-                            <form method="POST" action="settings.php" class="settings-form" id="profile-form" style="display: none;">
+                            <form method="POST" action="settings.php" class="settings-form" id="profile-form" style="display: <?php echo ($firstNameError || $lastNameError || $emailError) ? 'block' : 'none'; ?>;">
                                 <input type="hidden" name="update_profile" value="1">
                                 
                                 <div class="form-row-group">
@@ -194,8 +214,10 @@ $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecia
                                             type="text" 
                                             id="firstName" 
                                             name="firstName" 
+                                            class="<?php echo $firstNameError ? 'input-error' : ''; ?>"
+                                            placeholder="<?php echo $firstNameError ? htmlspecialchars($firstNameError) : ''; ?>"
                                             required
-                                            value="<?php echo $firstName; ?>"
+                                            value="<?php echo $firstNameValue; ?>"
                                         >
                                     </div>
                                     <div class="form-row">
@@ -204,8 +226,10 @@ $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecia
                                             type="text" 
                                             id="lastName" 
                                             name="lastName" 
+                                            class="<?php echo $lastNameError ? 'input-error' : ''; ?>"
+                                            placeholder="<?php echo $lastNameError ? htmlspecialchars($lastNameError) : ''; ?>"
                                             required
-                                            value="<?php echo $lastName; ?>"
+                                            value="<?php echo $lastNameValue; ?>"
                                         >
                                     </div>
                                 </div>
@@ -216,8 +240,10 @@ $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecia
                                         type="email" 
                                         id="email" 
                                         name="email" 
+                                        class="<?php echo $emailError ? 'input-error' : ''; ?>"
+                                        placeholder="<?php echo $emailError ? htmlspecialchars($emailError) : ''; ?>"
                                         required
-                                        value="<?php echo $email; ?>"
+                                        value="<?php echo $emailValue; ?>"
                                     >
                                 </div>
 
@@ -274,10 +300,54 @@ $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecia
             profileForm.style.display = 'none';
             profileDisplay.style.display = 'block';
             // Reset form values to original
-            document.getElementById('firstName').value = document.getElementById('display-firstName').textContent;
-            document.getElementById('lastName').value = document.getElementById('display-lastName').textContent;
-            document.getElementById('email').value = document.getElementById('display-email').textContent;
+            const firstNameInput = document.getElementById('firstName');
+            const lastNameInput = document.getElementById('lastName');
+            const emailInput = document.getElementById('email');
+            
+            firstNameInput.value = document.getElementById('display-firstName').textContent;
+            lastNameInput.value = document.getElementById('display-lastName').textContent;
+            emailInput.value = document.getElementById('display-email').textContent;
+            
+            // Clear error states
+            firstNameInput.classList.remove('input-error');
+            lastNameInput.classList.remove('input-error');
+            emailInput.classList.remove('input-error');
+            firstNameInput.placeholder = '';
+            lastNameInput.placeholder = '';
+            emailInput.placeholder = '';
         });
+        
+        // Clear error state when user starts typing
+        const firstNameInput = document.getElementById('firstName');
+        const lastNameInput = document.getElementById('lastName');
+        const emailInput = document.getElementById('email');
+        
+        if (firstNameInput) {
+            firstNameInput.addEventListener('input', function() {
+                if (this.classList.contains('input-error')) {
+                    this.classList.remove('input-error');
+                    this.placeholder = '';
+                }
+            });
+        }
+        
+        if (lastNameInput) {
+            lastNameInput.addEventListener('input', function() {
+                if (this.classList.contains('input-error')) {
+                    this.classList.remove('input-error');
+                    this.placeholder = '';
+                }
+            });
+        }
+        
+        if (emailInput) {
+            emailInput.addEventListener('input', function() {
+                if (this.classList.contains('input-error')) {
+                    this.classList.remove('input-error');
+                    this.placeholder = '';
+                }
+            });
+        }
         
         // Auto-dismiss success alert
         const successAlert = document.getElementById('success-alert');
