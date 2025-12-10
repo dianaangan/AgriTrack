@@ -151,12 +151,6 @@ if ($pdo) {
                         <h2>Product Directory</h2>
                         <div class="table-controls">
                             <input type="search" id="inventory-search" class="search-input compact" placeholder="Search products or farmers...">
-                            <select id="inventory-farmer" class="filter-select">
-                                <option value="">All Farmers</option>
-                                <?php foreach ($farmersList as $farmerId => $farmerName): ?>
-                                    <option value="<?php echo htmlspecialchars($farmerId); ?>"><?php echo htmlspecialchars($farmerName); ?></option>
-                                <?php endforeach; ?>
-                            </select>
                             <select id="inventory-status" class="filter-select">
                                 <option value="">All Status</option>
                                 <option value="in_stock">In Stock</option>
@@ -262,28 +256,24 @@ if ($pdo) {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('inventory-search');
-            const farmerFilter = document.getElementById('inventory-farmer');
             const statusFilter = document.getElementById('inventory-status');
             const tableBody = document.querySelector('.admin-products-table tbody');
             const allRows = Array.from(tableBody.querySelectorAll('tr'));
 
             function filterRows() {
                 const query = searchInput.value.toLowerCase();
-                const farmer = farmerFilter.value;
                 const status = statusFilter.value;
 
                 allRows.forEach(row => {
                     const matchesSearch = !query || row.dataset.name.includes(query);
-                    const matchesFarmer = !farmer || row.dataset.farmer === farmer;
                     const matchesStatus = !status || row.dataset.status === status;
 
-                    row.style.display = (matchesSearch && matchesFarmer && matchesStatus) ? '' : 'none';
+                    row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
                 });
             }
 
             filterRows();
             searchInput.addEventListener('input', filterRows);
-            farmerFilter.addEventListener('change', filterRows);
             statusFilter.addEventListener('change', filterRows);
         });
     </script>
