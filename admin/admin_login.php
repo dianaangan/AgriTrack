@@ -115,9 +115,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 									placeholder="<?php echo $passwordError ? htmlspecialchars($passwordError) : 'Your password'; ?>" 
 									required />
 							</div>
-							<div class="helper-row">
-								<a href="#" class="nav-link" style="font-size:.875rem;">Forgot Password?</a>
-							</div>
 							<div class="form-actions">
 								<button type="submit" id="submit-btn" class="btn btn-primary btn-large">
 									<span class="btn-text">Sign In</span>
